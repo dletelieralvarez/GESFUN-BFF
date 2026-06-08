@@ -30,7 +30,7 @@ public class BffProxyController {
         this.proxyService = proxyService;
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_https://duocactividadazure.onmicrosoft.com/daead1c3-a4cc-4647-9423-e1fc626d8003/access_as_user')")
+    @PreAuthorize("hasAuthority('SCOPE_access_as_user') or hasAuthority('SCOPE_https://duocactividadazure.onmicrosoft.com/daead1c3-a4cc-4647-9423-e1fc626d8003/access_as_user')")
     @RequestMapping(value = "/**", method = {
             RequestMethod.GET,
             RequestMethod.POST,

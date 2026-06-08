@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 @Service
@@ -43,25 +42,28 @@ public class ProxyService {
     }
 
     private URI buildBackendUri(HttpServletRequest request) {
-        String apiPath = extractApiPath(request);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(backendBaseUrl)
-                .pathSegment(apiPath.split("/"));
+        String targetUrl = normalizeBackendBaseUrl() + extractRequestPath(request);
 
         if (StringUtils.hasText(request.getQueryString())) {
-            builder.query(request.getQueryString());
+            targetUrl += "?" + request.getQueryString();
         }
 
-        return builder.build(true).toUri();
+        return URI.create(targetUrl);
     }
 
-    private String extractApiPath(HttpServletRequest request) {
+    private String normalizeBackendBaseUrl() {
+        return backendBaseUrl.replaceAll("/+$", "");
+    }
+
+    private String extractRequestPath(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         String contextPath = request.getContextPath();
-        String prefix = contextPath + "/api/";
-        if (requestUri.startsWith(prefix)) {
-            return requestUri.substring(prefix.length());
+
+        if (StringUtils.hasText(contextPath) && requestUri.startsWith(contextPath)) {
+            return requestUri.substring(contextPath.length());
         }
-        return requestUri.replaceFirst("^/api/", "");
+
+        return requestUri;
     }
 
     private HttpHeaders buildForwardHeaders(HttpServletRequest request, Jwt jwt) {
