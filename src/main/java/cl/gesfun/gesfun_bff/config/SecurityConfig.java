@@ -12,6 +12,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -35,6 +43,15 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins:http://localhost:4200}")
     private String allowedOrigins;
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.audience}")
+    private String audience;
+
+    @Value("${security.jwt.allowed-client-ids:}")
+    private String allowedClientIds;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -43,6 +60,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/bff/**").authenticated()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
@@ -62,6 +80,62 @@ public class SecurityConfig {
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return jwtConverter;
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
+        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuerUri),
+                audienceValidator(),
+                allowedClientValidator()
+        );
+
+        jwtDecoder.setJwtValidator(validator);
+        return jwtDecoder;
+    }
+
+    private OAuth2TokenValidator<Jwt> audienceValidator() {
+        return jwt -> {
+            if (jwt.getAudience().contains(audience)) {
+                return OAuth2TokenValidatorResult.success();
+            }
+
+            OAuth2Error error = new OAuth2Error("invalid_token", "El token no fue emitido para este BFF.", null);
+            return OAuth2TokenValidatorResult.failure(error);
+        };
+    }
+
+    private OAuth2TokenValidator<Jwt> allowedClientValidator() {
+        List<String> allowedClients = Arrays.stream(allowedClientIds.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .collect(Collectors.toList());
+
+        return jwt -> {
+            if (allowedClients.isEmpty()) {
+                return OAuth2TokenValidatorResult.success();
+            }
+
+            String clientId = firstPresentClaim(jwt, "azp", "appid", "client_id");
+            if (clientId != null && allowedClients.contains(clientId)) {
+                return OAuth2TokenValidatorResult.success();
+            }
+
+            OAuth2Error error = new OAuth2Error("invalid_token", "El token fue emitido por un cliente no permitido.", null);
+            return OAuth2TokenValidatorResult.failure(error);
+        };
+    }
+
+    private String firstPresentClaim(Jwt jwt, String... claimNames) {
+        for (String claimName : claimNames) {
+            String value = jwt.getClaimAsString(claimName);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     @Bean
