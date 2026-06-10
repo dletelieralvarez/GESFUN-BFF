@@ -22,6 +22,62 @@ GET http://localhost:8080/api/usuarios
 
 ## Endpoints disponibles desde el BFF
 
+## CRUD principales para Angular
+
+Usuarios se reenvia directo al backend `/api/usuarios`:
+
+```text
+GET    /api/usuarios
+GET    /api/usuarios/{id}
+POST   /api/usuarios
+PUT    /api/usuarios/{id}
+DELETE /api/usuarios/{id}
+```
+
+Clientes, proveedores y empleados son vistas BFF sobre el backend `/api/terceros`.
+El BFF agrega o fuerza automaticamente el campo `rol` segun la ruta:
+
+```text
+clientes    -> rol CLIENTE
+proveedores -> rol PROVEEDOR
+empleados   -> rol EMPLEADO
+```
+
+Clientes:
+
+```text
+GET    /api/clientes
+GET    /api/clientes/{uuid}
+GET    /api/clientes/empresa/{empresaUuid}
+POST   /api/clientes
+PUT    /api/clientes/{uuid}
+PATCH  /api/clientes/{uuid}/desactivar
+```
+
+Proveedores:
+
+```text
+GET    /api/proveedores
+GET    /api/proveedores/{uuid}
+GET    /api/proveedores/empresa/{empresaUuid}
+POST   /api/proveedores
+PUT    /api/proveedores/{uuid}
+PATCH  /api/proveedores/{uuid}/desactivar
+```
+
+Empleados:
+
+```text
+GET    /api/empleados
+GET    /api/empleados/{uuid}
+GET    /api/empleados/empresa/{empresaUuid}
+POST   /api/empleados
+PUT    /api/empleados/{uuid}
+PATCH  /api/empleados/{uuid}/desactivar
+```
+
+## Proxy general
+
 ```text
 GET    /api/health/database
 

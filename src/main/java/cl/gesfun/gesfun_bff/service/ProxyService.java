@@ -41,6 +41,23 @@ public class ProxyService {
         return restTemplate.exchange(backendUri, method, entity, Object.class);
     }
 
+    public ResponseEntity<Object> forwardToBackend(String backendPath, HttpMethod method, String body, Jwt jwt) {
+        URI backendUri = buildBackendUri(backendPath);
+        HttpHeaders headers = buildForwardHeaders(MediaType.APPLICATION_JSON_VALUE, jwt);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+        return restTemplate.exchange(backendUri, method, entity, Object.class);
+    }
+
+    public ResponseEntity<Object> forwardToBackend(String backendPath, String queryString, HttpMethod method, String body, Jwt jwt) {
+        String pathWithQuery = backendPath;
+
+        if (StringUtils.hasText(queryString)) {
+            pathWithQuery += "?" + queryString;
+        }
+
+        return forwardToBackend(pathWithQuery, method, body, jwt);
+    }
+
     private URI buildBackendUri(HttpServletRequest request) {
         String targetUrl = normalizeBackendBaseUrl() + extractRequestPath(request);
 
@@ -49,6 +66,11 @@ public class ProxyService {
         }
 
         return URI.create(targetUrl);
+    }
+
+    private URI buildBackendUri(String backendPath) {
+        String normalizedPath = backendPath.startsWith("/") ? backendPath : "/" + backendPath;
+        return URI.create(normalizeBackendBaseUrl() + normalizedPath);
     }
 
     private String normalizeBackendBaseUrl() {
@@ -67,10 +89,13 @@ public class ProxyService {
     }
 
     private HttpHeaders buildForwardHeaders(HttpServletRequest request, Jwt jwt) {
+        return buildForwardHeaders(request.getContentType(), jwt);
+    }
+
+    private HttpHeaders buildForwardHeaders(String contentType, Jwt jwt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
-        String contentType = request.getContentType();
         if (StringUtils.hasText(contentType)) {
             headers.setContentType(MediaType.parseMediaType(contentType));
         }
