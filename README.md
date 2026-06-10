@@ -49,16 +49,16 @@ cors.allowed-origins=http://localhost:4200
 Seguridad Azure:
 
 ```properties
-spring.security.oauth2.resourceserver.jwt.issuer-uri=https://login.microsoftonline.com/0848441e-8d61-4f58-84b7-9f55266c7ee4/v2.0
-spring.security.oauth2.resourceserver.jwt.audience=daead1c3-a4cc-4647-9423-e1fc626d8003
-security.jwt.allowed-client-ids=7c4068b3-4cdf-42f3-84ac-f8e2d2042118,e0090ab4-8924-4d8e-a5be-3edca3ebe556
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://login.microsoftonline.com/<TENANT_ID>/v2.0
+spring.security.oauth2.resourceserver.jwt.audience=<BFF_APP_ID>
+security.jwt.allowed-client-ids=<POSTMAN_CLIENT_ID>,<FRONTEND_CLIENT_ID>
 ```
 
 `security.jwt.allowed-client-ids` contiene los clientes autorizados para llamar al BFF:
 
 ```text
-7c4068b3-4cdf-42f3-84ac-f8e2d2042118 -> gesfun-postman-client
-e0090ab4-8924-4d8e-a5be-3edca3ebe556 -> gesfun-client
+<POSTMAN_CLIENT_ID>  -> cliente usado para pruebas en Postman
+<FRONTEND_CLIENT_ID> -> cliente usado por el frontend
 ```
 
 Si Azure cambia el Client ID de `gesfun-client`, se debe agregar o reemplazar en `security.jwt.allowed-client-ids`.
@@ -77,7 +77,7 @@ El token debe incluir:
 
 ```json
 {
-  "aud": "daead1c3-a4cc-4647-9423-e1fc626d8003",
+  "aud": "<BFF_APP_ID>",
   "scp": "access_as_user"
 }
 ```
@@ -93,14 +93,14 @@ access_as_user
 Levantar backend:
 
 ```powershell
-cd C:\Users\Gonzalo\Documents\DUOC\Bimestre7\Semana1\gesfun-backend-main\gesfun-backend-main
+cd <RUTA_DEL_BACKEND>
 .\mvnw.cmd spring-boot:run
 ```
 
 Levantar BFF:
 
 ```powershell
-cd C:\Users\Gonzalo\Documents\DUOC\Bimestre7\PROYECTO\gesfun-bff\gesfun-bff
+cd <RUTA_DEL_BFF>
 .\mvnw.cmd spring-boot:run
 ```
 
