@@ -1,5 +1,9 @@
-# Nombre del pipeline 
+# Nombre del pipeline
 name: CI/CD GesFun BFF
+
+# Evita advertencia futura de Node 20 en GitHub Actions
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # Define cuándo se ejecuta el pipeline
 on:
@@ -79,14 +83,19 @@ jobs:
       - name: Configurar SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+
+          printf "%s" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+
           chmod 600 ~/.ssh/ec2_key.pem
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+          ls -la ~/.ssh
+
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts || true
 
       # Entra a la EC2, descarga la nueva imagen y reinicia el contenedor
       - name: Desplegar BFF en EC2
         run: |
-          ssh -i ~/.ssh/ec2_key.pem "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
 
             # Login en DockerHub desde la EC2
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
