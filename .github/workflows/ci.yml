@@ -34,7 +34,7 @@ jobs:
 
       # Compila y ejecuta tests con Maven
       - name: Ejecutar tests y compilar
-        run: ./mvnw --batch-mode clean test
+        run: chmod +x mvnw && ./mvnw --batch-mode clean test
 
   # Job 2: construye la imagen Docker y la sube a DockerHub
   docker:
