@@ -84,11 +84,9 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          printf "%s" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+          printf "%s\n" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
 
           chmod 600 ~/.ssh/ec2_key.pem
-
-          ls -la ~/.ssh
 
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts || true
 
