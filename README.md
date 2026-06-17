@@ -285,6 +285,13 @@ POST   /api/tipos-movimiento
 PUT    /api/tipos-movimiento/{uuid}
 DELETE /api/tipos-movimiento/{uuid}
 
+GET    /api/tipos-recurso
+GET    /api/tipos-recurso/sucursal/{sucursalUuid}
+GET    /api/tipos-recurso/{uuid}
+POST   /api/tipos-recurso
+PUT    /api/tipos-recurso/{uuid}
+DELETE /api/tipos-recurso/{uuid}
+
 GET    /api/formas-pago
 GET    /api/formas-pago/{uuid}
 POST   /api/formas-pago
