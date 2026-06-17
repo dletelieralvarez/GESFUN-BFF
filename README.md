@@ -421,3 +421,9 @@ Compilar y ejecutar tests:
 ```powershell
 .\mvnw.cmd test
 ```
+
+El mismo comando genera el reporte de cobertura JaCoCo en:
+
+```text
+target/site/jacoco/index.html
+```
