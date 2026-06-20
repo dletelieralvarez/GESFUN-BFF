@@ -179,4 +179,8 @@ GET    /api/plan-kit/plan/{planUuid}
 POST   /api/plan-kit
 PUT    /api/plan-kit/{uuid}
 DELETE /api/plan-kit/{uuid}
+
+POST   /api/cotizaciones
+GET    /api/cotizaciones/{uuid}
+GET    /api/cotizaciones/sucursal/{sucursalUuid}
 ```

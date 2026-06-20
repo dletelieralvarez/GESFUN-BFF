@@ -304,12 +304,77 @@ POST   /api/estados-cotizacion
 PUT    /api/estados-cotizacion/{uuid}
 DELETE /api/estados-cotizacion/{uuid}
 
+POST   /api/cotizaciones
+GET    /api/cotizaciones/{uuid}
+GET    /api/cotizaciones/sucursal/{sucursalUuid}
+
 GET    /api/motivos-fallecimiento
 GET    /api/motivos-fallecimiento/{uuid}
 POST   /api/motivos-fallecimiento
 PUT    /api/motivos-fallecimiento/{uuid}
 DELETE /api/motivos-fallecimiento/{uuid}
 ```
+
+### Cotizaciones
+
+Las llamadas de cotizacion mantienen el mismo flujo protegido del resto del BFF:
+
+```text
+Angular/Postman -> BFF 8081 -> Backend 8080
+```
+
+Ejemplo para crear una cotizacion:
+
+```http
+POST /api/cotizaciones
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "sucursalUuid": "uuid-sucursal",
+  "planUuid": "uuid-plan",
+  "formaPagoUuid": "uuid-forma-pago",
+  "motivoFallecimientoUuid": "uuid-motivo",
+  "fecha": "2026-06-19",
+  "fechaValidez": "2026-06-30",
+  "observacion": "Cotizacion inicial",
+  "fechaFallecimiento": "2026-06-18",
+  "horaFallecimiento": "18:30:00",
+  "lugarFallecimiento": "Santiago",
+  "pagador": {
+    "tipoPersona": "N",
+    "rut": 12345678,
+    "dv": "5",
+    "nombres": "Ana",
+    "apellidoPaterno": "Perez",
+    "apellidoMaterno": "Soto",
+    "email": "ana@example.com",
+    "telefono": "+56912345678",
+    "comunaUuid": "uuid-comuna"
+  },
+  "fallecido": {
+    "tipoPersona": "N",
+    "rut": 8765432,
+    "dv": "1",
+    "nombres": "Juan",
+    "apellidoPaterno": "Perez",
+    "apellidoMaterno": "Soto",
+    "comunaUuid": "uuid-comuna"
+  },
+  "detalles": [
+    {
+      "productoServicioUuid": "uuid-producto-servicio",
+      "cantidad": 1,
+      "descuento": 0,
+      "observacion": "Detalle principal"
+    }
+  ]
+}
+```
+
+El backend asigna el numero, estado inicial y totales. El BFF valida la estructura, reenvia el token y devuelve la respuesta envuelta en `FrontendResponse`.
 
 Health del backend pasando por el BFF:
 
@@ -416,14 +481,34 @@ No se separan en `CreateRequest` y `UpdateRequest`; el backend mantiene la valid
 
 ## Verificacion
 
-Compilar y ejecutar tests:
+Compilar, ejecutar tests y generar cobertura:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
-El mismo comando genera el reporte de cobertura JaCoCo en:
+El reporte HTML de JaCoCo queda en:
 
 ```text
 target/site/jacoco/index.html
+```
+
+Cobertura actual de referencia:
+
+```text
+Total:       93% instrucciones
+Branches:   75%
+Controller: 98%
+Service:    81%
+Config:     99%
+Error:      100%
+```
+
+JaCoCo excluye del reporte los `model/*` y `GesfunBffApplication`, porque son records/clases de arranque sin logica de negocio. Los tests unitarios principales estan en:
+
+```text
+src/test/java/cl/gesfun/gesfun_bff/config
+src/test/java/cl/gesfun/gesfun_bff/controller
+src/test/java/cl/gesfun/gesfun_bff/error
+src/test/java/cl/gesfun/gesfun_bff/service
 ```
