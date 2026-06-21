@@ -47,4 +47,43 @@ class CotizacionBffServiceTest {
                 jwt
         );
     }
+
+    @Test
+    void listarReenviaRutaBaseDelBackend() {
+        when(proxyService.forwardToBackend(
+                "/api/cotizaciones",
+                HttpMethod.GET,
+                null,
+                jwt
+        )).thenReturn(ResponseEntity.ok("ok"));
+
+        service.listar(jwt);
+
+        verify(proxyService).forwardToBackend(
+                "/api/cotizaciones",
+                HttpMethod.GET,
+                null,
+                jwt
+        );
+    }
+
+    @Test
+    void actualizarEstadoReenviaPatchAlBackend() throws Exception {
+        var request = new cl.gesfun.gesfun_bff.model.CotizacionEstadoUpdate("estado-1");
+        when(proxyService.forwardToBackend(
+                "/api/cotizaciones/cotizacion-1/estado",
+                HttpMethod.PATCH,
+                "{\"estadoUuid\":\"estado-1\"}",
+                jwt
+        )).thenReturn(ResponseEntity.ok("ok"));
+
+        service.actualizarEstado("cotizacion-1", request, jwt);
+
+        verify(proxyService).forwardToBackend(
+                "/api/cotizaciones/cotizacion-1/estado",
+                HttpMethod.PATCH,
+                "{\"estadoUuid\":\"estado-1\"}",
+                jwt
+        );
+    }
 }

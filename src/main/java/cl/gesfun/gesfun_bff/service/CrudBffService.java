@@ -50,7 +50,7 @@ public abstract class CrudBffService {
         return proxyService.forwardToBackend(backendPath + path, method, body, jwt);
     }
 
-    private String toJson(Object request) throws JsonProcessingException {
+    protected String toJson(Object request) throws JsonProcessingException {
         return objectMapper.writeValueAsString(request);
     }
 }

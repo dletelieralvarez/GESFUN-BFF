@@ -1,6 +1,7 @@
 package cl.gesfun.gesfun_bff.controller;
 
 import cl.gesfun.gesfun_bff.model.Cotizacion;
+import cl.gesfun.gesfun_bff.model.CotizacionEstadoUpdate;
 import cl.gesfun.gesfun_bff.model.FrontendResponse;
 import cl.gesfun.gesfun_bff.service.CotizacionBffService;
 import java.util.List;
@@ -56,6 +57,26 @@ class BffCotizacionControllerTest {
         controller.buscarPorUuid("cotizacion-1", jwt);
 
         verify(service).buscarPorUuid("cotizacion-1", jwt);
+    }
+
+    @Test
+    void listarUsaServicio() {
+        when(service.listar(jwt)).thenReturn(ResponseEntity.ok(List.of()));
+
+        controller.listar(jwt);
+
+        verify(service).listar(jwt);
+    }
+
+    @Test
+    void actualizarEstadoUsaUuidYRequest() throws Exception {
+        CotizacionEstadoUpdate request = new CotizacionEstadoUpdate("estado-1");
+        when(service.actualizarEstado("cotizacion-1", request, jwt))
+                .thenReturn(ResponseEntity.ok(Map.of("estadoCodigo", "GEN_CONTR")));
+
+        controller.actualizarEstado("cotizacion-1", request, jwt);
+
+        verify(service).actualizarEstado("cotizacion-1", request, jwt);
     }
 
     @Test

@@ -6,6 +6,7 @@ Arquitectura local recomendada:
 Frontend Angular: http://localhost:4200
 BFF Gesfun:       http://localhost:8081
 Backend Gesfun:   http://localhost:8080
+Inventario:       http://localhost:8100
 ```
 
 El frontend debe llamar siempre al BFF. Por ejemplo:
@@ -181,6 +182,21 @@ PUT    /api/plan-kit/{uuid}
 DELETE /api/plan-kit/{uuid}
 
 POST   /api/cotizaciones
+GET    /api/cotizaciones
 GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
+PATCH  /api/cotizaciones/{uuid}/estado
+```
+
+## Inventario
+
+Estas rutas se reenvian al microservicio configurado en `inventario.base-url`:
+
+```text
+POST  /api/inventario/entradas
+POST  /api/inventario/salidas
+PATCH /api/inventario/movimientos/{movimientoUuid}/anular
+GET   /api/inventario/stock?sucursalUuid={uuid}
+GET   /api/inventario/stock/productos/{productoUuid}?sucursalUuid={uuid}
+GET   /api/inventario/reportes/kardex?productoUuid={uuid}&sucursalUuid={uuid}
 ```

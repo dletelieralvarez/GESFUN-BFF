@@ -15,4 +15,9 @@ public class CotizacionBffService extends CrudBffService {
     public ResponseEntity<Object> listarPorSucursal(String sucursalUuid, Jwt jwt) {
         return buscarPorRuta("/sucursal/" + sucursalUuid, jwt);
     }
+
+    public ResponseEntity<Object> actualizarEstado(String uuid, Object request, Jwt jwt)
+            throws com.fasterxml.jackson.core.JsonProcessingException {
+        return forward("/" + uuid + "/estado", org.springframework.http.HttpMethod.PATCH, toJson(request), jwt);
+    }
 }

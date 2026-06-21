@@ -10,12 +10,14 @@ Este proyecto actua como Backend-For-Frontend entre el frontend Angular y el bac
 Frontend Angular: http://localhost:4200
 BFF Gesfun:       http://localhost:8081
 Backend Gesfun:   http://localhost:8080
+Inventario:       http://localhost:8100
 ```
 
 Flujo esperado:
 
 ```text
-Angular/Postman -> BFF 8081 -> Backend 8080
+Angular/Postman -> BFF 8081 -> Backend Gesfun 8080
+                            -> Inventario 8100
 ```
 
 Ejemplo:
@@ -43,8 +45,12 @@ Propiedades relevantes:
 ```properties
 server.port=8081
 backend.base-url=http://localhost:8080
+inventario.base-url=${INVENTARIO_URL:http://localhost:8100}
 cors.allowed-origins=http://localhost:4200
 ```
+
+`INVENTARIO_URL` permite cambiar el destino sin modificar el repositorio. Si la
+variable no está definida, el BFF usa `http://localhost:8100`.
 
 Seguridad Azure:
 
@@ -94,6 +100,13 @@ Levantar backend:
 
 ```powershell
 cd <RUTA_DEL_BACKEND>
+.\mvnw.cmd spring-boot:run
+```
+
+Levantar Inventario:
+
+```powershell
+cd <RUTA_INVENTARIO_SERVICE>
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -305,8 +318,10 @@ PUT    /api/estados-cotizacion/{uuid}
 DELETE /api/estados-cotizacion/{uuid}
 
 POST   /api/cotizaciones
+GET    /api/cotizaciones
 GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
+PATCH  /api/cotizaciones/{uuid}/estado
 
 GET    /api/motivos-fallecimiento
 GET    /api/motivos-fallecimiento/{uuid}
@@ -376,11 +391,43 @@ Content-Type: application/json
 
 El backend asigna el numero, estado inicial y totales. El BFF valida la estructura, reenvia el token y devuelve la respuesta envuelta en `FrontendResponse`.
 
+Para cambiar el estado de una cotizacion:
+
+```http
+PATCH /api/cotizaciones/{uuid}/estado
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "estadoUuid": "uuid-estado-cotizacion"
+}
+```
+
 Health del backend pasando por el BFF:
 
 ```text
 GET /api/health/database
 ```
+
+### Inventario
+
+El BFF dirige estas rutas al microservicio configurado mediante
+`inventario.base-url` (por defecto `http://localhost:8100`):
+
+```text
+POST  /api/inventario/entradas
+POST  /api/inventario/salidas
+PATCH /api/inventario/movimientos/{movimientoUuid}/anular
+GET   /api/inventario/stock?sucursalUuid={uuid}
+GET   /api/inventario/stock/productos/{productoUuid}?sucursalUuid={uuid}
+GET   /api/inventario/reportes/kardex?productoUuid={uuid}&sucursalUuid={uuid}
+```
+
+El frontend sigue llamando únicamente al BFF en el puerto `8081`. El BFF valida
+el token, lo reenvía al microservicio y envuelve su respuesta en
+`FrontendResponse`.
 
 ## Diagnostico de token
 
@@ -442,6 +489,11 @@ El token fue valido, pero no trae el scope requerido.
 `Connection refused http://localhost:8080/...`
 
 El BFF esta levantado, pero el backend no esta respondiendo en `8080`.
+
+`Connection refused http://localhost:8100/...`
+
+El BFF esta levantado, pero el microservicio de Inventario no esta respondiendo
+en `8100`, o `INVENTARIO_URL` apunta a una dirección incorrecta.
 
 ## Endpoints
 
