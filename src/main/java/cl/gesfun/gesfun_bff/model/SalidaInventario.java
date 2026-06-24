@@ -1,5 +1,6 @@
 package cl.gesfun.gesfun_bff.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,7 @@ public record SalidaInventario(
         @NotBlank(message = "El uuid del usuario es obligatorio")
         @Size(max = 36, message = "El uuid del usuario no puede superar los 36 caracteres")
         String usuarioUuid,
+        @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate fechaDocumento,
         @Size(max = 30, message = "El numero de guia no puede superar los 30 caracteres")
         String numeroGuia,

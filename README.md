@@ -429,6 +429,53 @@ El frontend sigue llamando únicamente al BFF en el puerto `8081`. El BFF valida
 el token, lo reenvía al microservicio y envuelve su respuesta en
 `FrontendResponse`.
 
+Ejemplo de entrada completa enviada en una sola petición:
+
+```http
+POST /api/inventario/entradas
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "sucursalUuid": "uuid-sucursal",
+  "tipoMovimientoUuid": "uuid-tipo-entrada",
+  "formaPagoUuid": "uuid-forma-pago",
+  "terceroUuid": "uuid-proveedor",
+  "recibidoPorUuid": null,
+  "usuarioUuid": "uuid-usuario",
+  "fechaDocumento": "2026-06-20",
+  "fechaRecepcion": "2026-06-20",
+  "fechaPago": "2026-06-20",
+  "numeroOc": "OC-POSTMAN-001",
+  "numeroGuia": "GUIA-POSTMAN-001",
+  "numeroFactura": "FACT-POSTMAN-001",
+  "observacion": "Entrada creada desde Postman",
+  "detalles": [
+    {
+      "productoUuid": "uuid-producto-uno",
+      "cantidad": 3,
+      "costoUnitario": 180000,
+      "descuento": 0,
+      "observacion": "Primer producto"
+    },
+    {
+      "productoUuid": "uuid-producto-dos",
+      "cantidad": 4,
+      "costoUnitario": 90000,
+      "descuento": 0,
+      "observacion": "Segundo producto"
+    }
+  ]
+}
+```
+
+El BFF reenvía ese body como una sola llamada a
+`POST http://localhost:8100/api/inventario/entradas`. Inventario valida y guarda
+la cabecera y todos los detalles dentro de una única transacción. Si falla una
+línea, no se registra ninguna parte de la entrada.
+
 ## Diagnostico de token
 
 Endpoint del BFF para revisar el token autenticado:

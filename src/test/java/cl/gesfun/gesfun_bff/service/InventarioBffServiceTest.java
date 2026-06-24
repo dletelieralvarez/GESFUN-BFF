@@ -2,9 +2,13 @@ package cl.gesfun.gesfun_bff.service;
 
 import cl.gesfun.gesfun_bff.model.AnulacionMovimientoInventario;
 import cl.gesfun.gesfun_bff.model.EntradaInventario;
+import cl.gesfun.gesfun_bff.model.MovimientoInventarioDetalle;
 import cl.gesfun.gesfun_bff.model.SalidaInventario;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,26 +46,43 @@ class InventarioBffServiceTest {
     }
 
     @Test
-    void registraEntradasSalidasYAnulacionEnInventario() throws Exception {
+    void registraEntradaCompletaComoUnSoloJsonConDosProductos() throws Exception {
         EntradaInventario entrada = new EntradaInventario(
-                "sucursal", "tipo", null, null, null, "usuario",
-                null, null, null, null, null, null, null, null
+                "sucursal-1",
+                "tipo-entrada-1",
+                "forma-pago-1",
+                "proveedor-1",
+                null,
+                "usuario-1",
+                LocalDate.of(2026, 6, 20),
+                LocalDate.of(2026, 6, 20),
+                LocalDate.of(2026, 6, 20),
+                "OC-POSTMAN-001",
+                "GUIA-POSTMAN-001",
+                "FACT-POSTMAN-001",
+                "Entrada creada desde Postman",
+                List.of(
+                        new MovimientoInventarioDetalle(
+                                "producto-1",
+                                new BigDecimal("3"),
+                                new BigDecimal("180000"),
+                                BigDecimal.ZERO,
+                                "Primer producto"
+                        ),
+                        new MovimientoInventarioDetalle(
+                                "producto-2",
+                                new BigDecimal("4"),
+                                new BigDecimal("90000"),
+                                BigDecimal.ZERO,
+                                "Segundo producto"
+                        )
+                )
         );
-        SalidaInventario salida = new SalidaInventario(
-                "sucursal", "tipo", null, null, null, "usuario",
-                null, null, null, null, null
-        );
-        AnulacionMovimientoInventario anulacion =
-                new AnulacionMovimientoInventario("Error de digitacion", "usuario");
 
         when(jwt.getTokenValue()).thenReturn("token");
         mockExchange("http://localhost:8100/api/inventario/entradas", HttpMethod.POST);
-        mockExchange("http://localhost:8100/api/inventario/salidas", HttpMethod.POST);
-        mockExchange("http://localhost:8100/api/inventario/movimientos/mov-1/anular", HttpMethod.PATCH);
 
         service.registrarEntrada(entrada, jwt);
-        service.registrarSalida(salida, jwt);
-        service.anularMovimiento("mov-1", anulacion, jwt);
 
         ArgumentCaptor<HttpEntity<String>> entity = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(
@@ -70,9 +91,38 @@ class InventarioBffServiceTest {
                 entity.capture(),
                 eq(Object.class)
         );
-        assertThat(entity.getValue().getBody()).contains("\"sucursalUuid\":\"sucursal\"");
+        assertThat(entity.getValue().getBody())
+                .contains("\"sucursalUuid\":\"sucursal-1\"")
+                .contains("\"tipoMovimientoUuid\":\"tipo-entrada-1\"")
+                .contains("\"formaPagoUuid\":\"forma-pago-1\"")
+                .contains("\"terceroUuid\":\"proveedor-1\"")
+                .contains("\"usuarioUuid\":\"usuario-1\"")
+                .contains("\"fechaDocumento\":\"2026-06-20\"")
+                .contains("\"numeroOc\":\"OC-POSTMAN-001\"")
+                .contains("\"productoUuid\":\"producto-1\"")
+                .contains("\"cantidad\":3")
+                .contains("\"costoUnitario\":180000")
+                .contains("\"productoUuid\":\"producto-2\"")
+                .contains("\"cantidad\":4")
+                .contains("\"costoUnitario\":90000");
         assertThat(entity.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
                 .isEqualTo("Bearer token");
+    }
+
+    @Test
+    void registraSalidasYAnulacionEnInventario() throws Exception {
+        SalidaInventario salida = new SalidaInventario(
+                "sucursal", "tipo", null, null, null, "usuario",
+                null, null, null, null, null
+        );
+        AnulacionMovimientoInventario anulacion =
+                new AnulacionMovimientoInventario("Error de digitacion", "usuario");
+
+        mockExchange("http://localhost:8100/api/inventario/salidas", HttpMethod.POST);
+        mockExchange("http://localhost:8100/api/inventario/movimientos/mov-1/anular", HttpMethod.PATCH);
+
+        service.registrarSalida(salida, null);
+        service.anularMovimiento("mov-1", anulacion, null);
     }
 
     @Test
