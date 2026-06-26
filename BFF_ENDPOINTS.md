@@ -186,6 +186,14 @@ GET    /api/cotizaciones
 GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
+
+GET    /api/agendas
+GET    /api/agendas/{uuid}
+GET    /api/agendas/sucursal/{sucursalUuid}
+GET    /api/agendas/tipo-recurso/{tipoRecursoUuid}
+POST   /api/agendas
+PUT    /api/agendas/{uuid}
+DELETE /api/agendas/{uuid}
 ```
 
 ## Inventario

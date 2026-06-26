@@ -323,6 +323,14 @@ GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
 
+GET    /api/agendas
+GET    /api/agendas/{uuid}
+GET    /api/agendas/sucursal/{sucursalUuid}
+GET    /api/agendas/tipo-recurso/{tipoRecursoUuid}
+POST   /api/agendas
+PUT    /api/agendas/{uuid}
+DELETE /api/agendas/{uuid}
+
 GET    /api/motivos-fallecimiento
 GET    /api/motivos-fallecimiento/{uuid}
 POST   /api/motivos-fallecimiento
@@ -404,6 +412,32 @@ Content-Type: application/json
   "estadoUuid": "uuid-estado-cotizacion"
 }
 ```
+
+### Agenda de servicios
+
+Las agendas se reenvian al backend Gesfun en `/api/agendas` y quedan asociadas
+a sucursal, tipo de recurso y cotizacion:
+
+```http
+POST /api/agendas
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "fechaHoraInicio": "2026-06-25T10:00:00",
+  "fechaHoraFin": "2026-06-25T12:00:00",
+  "estado": "OCUPADO",
+  "observacion": "Sala de velatorio para servicio",
+  "tipoRecursoUuid": "uuid-tipo-recurso",
+  "sucursalUuid": "uuid-sucursal",
+  "cotizacionUuid": "uuid-cotizacion"
+}
+```
+
+El backend valida reglas de negocio como rango horario, pertenencia a sucursal,
+cotizacion obligatoria y solapamientos para agendas `OCUPADO`.
 
 Health del backend pasando por el BFF:
 
