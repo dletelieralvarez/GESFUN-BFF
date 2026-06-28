@@ -4,6 +4,22 @@ BFF Spring Boot para Angular + Azure Entra ID.
 
 Este proyecto actua como Backend-For-Frontend entre el frontend Angular y el backend Gesfun. El frontend no debe llamar directo al backend: debe llamar al BFF, y el BFF valida el token de Azure, aplica permisos y reenvia la peticion al backend real.
 
+## Stack y requisitos
+
+```text
+Java 21
+Spring Boot 3.5.14
+Maven Wrapper incluido
+OAuth2 Resource Server con Azure Entra ID
+JaCoCo para reporte de cobertura
+```
+
+No es necesario instalar Maven globalmente si se usa el wrapper del proyecto:
+
+```powershell
+.\mvnw.cmd --version
+```
+
 ## Arquitectura local
 
 ```text
@@ -96,6 +112,12 @@ access_as_user
 
 ## Ejecutar localmente
 
+Instalar dependencias y compilar:
+
+```powershell
+.\mvnw.cmd clean package
+```
+
 Levantar backend:
 
 ```powershell
@@ -114,6 +136,13 @@ Levantar BFF:
 
 ```powershell
 cd <RUTA_DEL_BFF>
+.\mvnw.cmd spring-boot:run
+```
+
+Cambiar el destino de Inventario sin editar archivos:
+
+```powershell
+$env:INVENTARIO_URL="http://localhost:8100"
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -618,6 +647,20 @@ Compilar, ejecutar tests y generar cobertura:
 
 ```powershell
 .\mvnw.cmd test
+```
+
+Generar el artefacto ejecutable:
+
+```powershell
+.\mvnw.cmd clean package
+java -jar target\gesfun-bff-0.0.1-SNAPSHOT.jar
+```
+
+Construir imagen Docker:
+
+```powershell
+docker build -t gesfun-bff .
+docker run --rm -p 8081:8081 -e INVENTARIO_URL=http://host.docker.internal:8100 gesfun-bff
 ```
 
 El reporte HTML de JaCoCo queda en:
