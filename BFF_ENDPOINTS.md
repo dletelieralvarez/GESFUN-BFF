@@ -187,6 +187,22 @@ GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
 
+GET    /api/pagos
+GET    /api/pagos/{uuid}
+GET    /api/pagos/cotizacion/{cotizacionUuid}
+POST   /api/pagos
+PUT    /api/pagos/{uuid}
+PATCH  /api/pagos/{uuid}/anular
+
+GET    /api/documentos-tributarios
+GET    /api/documentos-tributarios/{uuid}
+GET    /api/documentos-tributarios/pago/{pagoUuid}
+GET    /api/documentos-tributarios/cotizacion/{cotizacionUuid}
+POST   /api/documentos-tributarios/emitir
+PUT    /api/documentos-tributarios/{uuid}
+POST   /api/documentos-tributarios/{uuid}/reenviar
+PATCH  /api/documentos-tributarios/{uuid}/anular
+
 GET    /api/agendas
 GET    /api/agendas/{uuid}
 GET    /api/agendas/sucursal/{sucursalUuid}

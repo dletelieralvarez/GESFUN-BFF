@@ -352,6 +352,22 @@ GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
 
+GET    /api/pagos
+GET    /api/pagos/{uuid}
+GET    /api/pagos/cotizacion/{cotizacionUuid}
+POST   /api/pagos
+PUT    /api/pagos/{uuid}
+PATCH  /api/pagos/{uuid}/anular
+
+GET    /api/documentos-tributarios
+GET    /api/documentos-tributarios/{uuid}
+GET    /api/documentos-tributarios/pago/{pagoUuid}
+GET    /api/documentos-tributarios/cotizacion/{cotizacionUuid}
+POST   /api/documentos-tributarios/emitir
+PUT    /api/documentos-tributarios/{uuid}
+POST   /api/documentos-tributarios/{uuid}/reenviar
+PATCH  /api/documentos-tributarios/{uuid}/anular
+
 GET    /api/agendas
 GET    /api/agendas/{uuid}
 GET    /api/agendas/sucursal/{sucursalUuid}
@@ -440,6 +456,96 @@ Content-Type: application/json
 {
   "estadoUuid": "uuid-estado-cotizacion"
 }
+```
+
+### Pagos y facturacion
+
+Las llamadas de pagos y documentos tributarios mantienen el mismo flujo protegido
+del resto del BFF:
+
+```text
+Angular/Postman -> BFF 8081 -> Backend 8080
+```
+
+Registrar un pago:
+
+```http
+POST /api/pagos
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "cotizacionUuid": "uuid-cotizacion",
+  "formaPagoUuid": "uuid-forma-pago",
+  "monto": 150000,
+  "fechaPago": "2026-06-27T10:30:00",
+  "observacion": "Abono inicial"
+}
+```
+
+Estados de pago:
+
+```text
+REGISTRADO
+ANULADO
+```
+
+Consultar pagos de una cotizacion:
+
+```text
+GET /api/pagos/cotizacion/{cotizacionUuid}
+```
+
+Anular un pago:
+
+```text
+PATCH /api/pagos/{uuid}/anular
+```
+
+Emitir un documento tributario simulado:
+
+```http
+POST /api/documentos-tributarios/emitir
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "pagoUuid": "uuid-pago",
+  "tipoDocumentoCodigo": "BOLETA",
+  "observacion": "Emision por pago de servicio funerario"
+}
+```
+
+Estados DTE:
+
+```text
+PENDIENTE
+ENVIADO
+EMITIDO
+RECHAZADO
+ANULADO
+```
+
+El backend no permite emitir DTE para pagos anulados ni emitir mas de un DTE
+activo para el mismo pago. La emision simula el proveedor
+`DTEEMITE_SIMULADO`; el total se toma desde el monto del pago y el receptor se
+toma desde el pagador de la cotizacion.
+
+La respuesta del backend incluye datos como `folio`, `trackId`, `pdfUrl`,
+`xmlUrl`, `requestJson`, `responseJson` y `detalles`, envueltos por el BFF en
+`FrontendResponse`.
+
+Rutas adicionales:
+
+```text
+GET   /api/documentos-tributarios/pago/{pagoUuid}
+GET   /api/documentos-tributarios/cotizacion/{cotizacionUuid}
+POST  /api/documentos-tributarios/{uuid}/reenviar
+PATCH /api/documentos-tributarios/{uuid}/anular
 ```
 
 ### Agenda de servicios
