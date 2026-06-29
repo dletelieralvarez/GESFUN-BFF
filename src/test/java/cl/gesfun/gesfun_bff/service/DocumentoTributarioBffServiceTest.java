@@ -75,6 +75,24 @@ class DocumentoTributarioBffServiceTest {
     }
 
     @Test
+    void emitirReenviaFacturaComoCodigoTributario() throws Exception {
+        DocumentoTributarioEmitir request = new DocumentoTributarioEmitir(
+                "pago-1",
+                "FACTURA",
+                "Emision por pago de servicio funerario"
+        );
+        when(proxyService.forwardToBackend(eq("/api/documentos-tributarios/emitir"), eq(HttpMethod.POST), anyString(), eq(jwt)))
+                .thenReturn(ResponseEntity.ok("ok"));
+
+        service.emitir(request, jwt);
+
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(proxyService).forwardToBackend(eq("/api/documentos-tributarios/emitir"), eq(HttpMethod.POST), bodyCaptor.capture(), eq(jwt));
+        JsonNode body = new ObjectMapper().readTree(bodyCaptor.getValue());
+        assertThat(body.get("tipoDocumentoCodigo").asText()).isEqualTo("FACTURA");
+    }
+
+    @Test
     void reenviarUsaPostConUuid() {
         when(proxyService.forwardToBackend("/api/documentos-tributarios/doc-1/reenviar", HttpMethod.POST, null, jwt))
                 .thenReturn(ResponseEntity.ok("ok"));

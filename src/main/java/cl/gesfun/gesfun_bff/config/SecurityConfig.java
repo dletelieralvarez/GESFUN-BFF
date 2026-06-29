@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +34,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     /*
         Configura Spring Security para el BFF.
@@ -66,7 +70,25 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
+                .authenticationEntryPoint((request, response, authException) -> {
+                    log.warn(
+                            "BFF rechazo request antes del controller. method={} path={} status=401 reason={}",
+                            request.getMethod(),
+                            request.getRequestURI(),
+                            authException.getMessage()
+                    );
+                    response.sendError(org.springframework.http.HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                })
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    log.warn(
+                            "BFF denego request autenticado antes del controller. method={} path={} status=403 reason={}",
+                            request.getMethod(),
+                            request.getRequestURI(),
+                            accessDeniedException.getMessage()
+                    );
+                    response.sendError(org.springframework.http.HttpStatus.FORBIDDEN.value(), "Forbidden");
+                })
             );
 
         return http.build();
@@ -102,6 +124,7 @@ public class SecurityConfig {
                 return OAuth2TokenValidatorResult.success();
             }
 
+            log.warn("JWT rechazado por audience invalida. expectedAudience={} tokenAudience={}", audience, jwt.getAudience());
             OAuth2Error error = new OAuth2Error("invalid_token", "El token no fue emitido para este BFF.", null);
             return OAuth2TokenValidatorResult.failure(error);
         };
@@ -123,6 +146,7 @@ public class SecurityConfig {
                 return OAuth2TokenValidatorResult.success();
             }
 
+            log.warn("JWT rechazado por client id no permitido. clientId={} allowedClientIds={}", clientId, allowedClients);
             OAuth2Error error = new OAuth2Error("invalid_token", "El token fue emitido por un cliente no permitido.", null);
             return OAuth2TokenValidatorResult.failure(error);
         };

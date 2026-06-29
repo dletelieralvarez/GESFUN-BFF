@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.Collections;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,9 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class ProxyService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProxyService.class);
 
     /*
         Implementa la lógica de reenvío de peticiones hacia el backend real.
@@ -38,14 +43,14 @@ public class ProxyService {
         URI backendUri = buildBackendUri(request);
         HttpHeaders headers = buildForwardHeaders(request, jwt);
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(backendUri, method, entity, Object.class);
+        return exchange(backendUri, method, entity, jwt);
     }
 
     public ResponseEntity<Object> forwardToBackend(String backendPath, HttpMethod method, String body, Jwt jwt) {
         URI backendUri = buildBackendUri(backendPath);
         HttpHeaders headers = buildForwardHeaders(MediaType.APPLICATION_JSON_VALUE, jwt);
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(backendUri, method, entity, Object.class);
+        return exchange(backendUri, method, entity, jwt);
     }
 
     public ResponseEntity<Object> forwardToBackend(String backendPath, String queryString, HttpMethod method, String body, Jwt jwt) {
@@ -105,5 +110,47 @@ public class ProxyService {
         }
 
         return headers;
+    }
+
+    private ResponseEntity<Object> exchange(URI backendUri, HttpMethod method, HttpEntity<String> entity, Jwt jwt) {
+        log.info(
+                "BFF reenviando request al backend. method={} backendUri={} jwtPresent={} clientId={} scopes={}",
+                method,
+                backendUri,
+                jwt != null,
+                jwt != null ? firstPresentClaim(jwt, "azp", "appid", "client_id") : null,
+                jwt != null ? jwt.getClaimAsString("scp") : null
+        );
+
+        try {
+            ResponseEntity<Object> response = restTemplate.exchange(backendUri, method, entity, Object.class);
+            log.info(
+                    "Backend respondio al BFF. method={} backendUri={} status={}",
+                    method,
+                    backendUri,
+                    response.getStatusCode()
+            );
+            return response;
+        } catch (RestClientResponseException ex) {
+            log.warn(
+                    "Backend respondio error al BFF. method={} backendUri={} status={} responseBody={}",
+                    method,
+                    backendUri,
+                    ex.getRawStatusCode(),
+                    ex.getResponseBodyAsString()
+            );
+            throw ex;
+        }
+    }
+
+    private String firstPresentClaim(Jwt jwt, String... claimNames) {
+        for (String claimName : claimNames) {
+            String value = jwt.getClaimAsString(claimName);
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
+        }
+
+        return null;
     }
 }

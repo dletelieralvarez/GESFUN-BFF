@@ -520,6 +520,21 @@ Content-Type: application/json
 }
 ```
 
+`tipoDocumentoCodigo` debe seleccionarse desde una lista fija del frontend:
+
+```text
+BOLETA
+FACTURA
+```
+
+No se debe consultar `/api/tipos-documento` para poblar tipos DTE. Esa tabla se
+usa para documentos operacionales funerarios, no para documentos tributarios.
+Si se envia otro valor, el backend responde `400 Bad Request` con el mensaje:
+
+```text
+Tipo de documento tributario invalido. Use BOLETA o FACTURA.
+```
+
 Estados DTE:
 
 ```text
@@ -535,9 +550,30 @@ activo para el mismo pago. La emision simula el proveedor
 `DTEEMITE_SIMULADO`; el total se toma desde el monto del pago y el receptor se
 toma desde el pagador de la cotizacion.
 
-La respuesta del backend incluye datos como `folio`, `trackId`, `pdfUrl`,
-`xmlUrl`, `requestJson`, `responseJson` y `detalles`, envueltos por el BFF en
-`FrontendResponse`.
+Para `BOLETA`, el backend responde `tipoDocumentoNombre` como `Boleta`. Para
+`FACTURA`, responde `Factura`. La respuesta no incluye `tipoDocumentoUuid`.
+
+Ejemplo de respuesta esperada dentro del `payload`:
+
+```json
+{
+  "uuid": "uuid-documento",
+  "pagoUuid": "uuid-pago",
+  "cotizacionUuid": "uuid-cotizacion",
+  "cotizacionNumero": 15,
+  "tipoDocumentoCodigo": "BOLETA",
+  "tipoDocumentoNombre": "Boleta",
+  "estado": "EMITIDO",
+  "folio": "12345",
+  "trackId": "DTE-20260627-12345",
+  "proveedor": "DTEEMITE_SIMULADO",
+  "pdfUrl": "https://dteemite.local/documentos/12345.pdf",
+  "xmlUrl": "https://dteemite.local/documentos/12345.xml"
+}
+```
+
+La respuesta completa tambien puede incluir `requestJson`, `responseJson` y
+`detalles`, envueltos por el BFF en `FrontendResponse`.
 
 Rutas adicionales:
 
