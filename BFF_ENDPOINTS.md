@@ -210,6 +210,16 @@ GET    /api/agendas/tipo-recurso/{tipoRecursoUuid}
 POST   /api/agendas
 PUT    /api/agendas/{uuid}
 DELETE /api/agendas/{uuid}
+
+GET    /api/servicios
+GET    /api/servicios/{uuid}
+GET    /api/servicios/sucursal/{sucursalUuid}
+GET    /api/servicios/estado/{estado}
+GET    /api/servicios/cotizacion/{cotizacionUuid}
+GET    /api/servicios/cliente/{terceroUuid}
+POST   /api/servicios
+PUT    /api/servicios/{uuid}
+PATCH  /api/servicios/{uuid}/desactivar
 ```
 
 ## Inventario

@@ -376,6 +376,16 @@ POST   /api/agendas
 PUT    /api/agendas/{uuid}
 DELETE /api/agendas/{uuid}
 
+GET    /api/servicios
+GET    /api/servicios/{uuid}
+GET    /api/servicios/sucursal/{sucursalUuid}
+GET    /api/servicios/estado/{estado}
+GET    /api/servicios/cotizacion/{cotizacionUuid}
+GET    /api/servicios/cliente/{terceroUuid}
+POST   /api/servicios
+PUT    /api/servicios/{uuid}
+PATCH  /api/servicios/{uuid}/desactivar
+
 GET    /api/motivos-fallecimiento
 GET    /api/motivos-fallecimiento/{uuid}
 POST   /api/motivos-fallecimiento
@@ -616,6 +626,112 @@ Health del backend pasando por el BFF:
 GET /api/health/database
 ```
 
+### Servicios funerarios
+
+Los servicios funerarios representan el seguimiento operativo de un caso real.
+No son el catalogo comercial de `/api/productos-servicios`.
+
+Rutas disponibles:
+
+```text
+GET    /api/servicios
+GET    /api/servicios/{uuid}
+GET    /api/servicios/sucursal/{sucursalUuid}
+GET    /api/servicios/estado/{estado}
+GET    /api/servicios/cotizacion/{cotizacionUuid}
+GET    /api/servicios/cliente/{terceroUuid}
+POST   /api/servicios
+PUT    /api/servicios/{uuid}
+PATCH  /api/servicios/{uuid}/desactivar
+```
+
+Estados validos:
+
+```text
+PENDIENTE
+PROGRAMADO
+EN_CURSO
+COMPLETADO
+ANULADO
+```
+
+Crear o actualizar un servicio:
+
+```http
+POST /api/servicios
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "folio": "ES-2026-0001",
+  "fallecidoNombre": "Nombre Apellido",
+  "fallecidoRut": "12345678-9",
+  "estado": "PROGRAMADO",
+  "fechaIngreso": "2026-06-30T10:00:00",
+  "fechaVelatorio": "2026-06-30T18:00:00",
+  "fechaCeremonia": "2026-07-01T10:00:00",
+  "fechaTermino": "2026-07-01T12:00:00",
+  "destino": "Cementerio General",
+  "montoTotal": 2050000,
+  "montoPagado": 500000,
+  "observacion": "Servicio contratado por la familia",
+  "cotizacionUuid": "uuid-cotizacion",
+  "terceroUuid": "uuid-cliente-responsable",
+  "suscripcionPlanUuid": "uuid-plan",
+  "sucursalUuid": "uuid-sucursal",
+  "agendaUuid": "uuid-agenda",
+  "motivoFallecimientoUuid": "uuid-motivo",
+  "responsableUsuarioUuid": "uuid-usuario"
+}
+```
+
+Respuesta esperada dentro del `payload`:
+
+```json
+{
+  "uuid": "uuid-servicio",
+  "folio": "ES-2026-0001",
+  "fallecidoNombre": "Nombre Apellido",
+  "fallecidoRut": "12345678-9",
+  "estado": "PROGRAMADO",
+  "estadoNombre": "Programado",
+  "fechaIngreso": "2026-06-30T10:00:00",
+  "fechaVelatorio": "2026-06-30T18:00:00",
+  "fechaCeremonia": "2026-07-01T10:00:00",
+  "fechaTermino": "2026-07-01T12:00:00",
+  "destino": "Cementerio General",
+  "montoTotal": 2050000,
+  "montoPagado": 500000,
+  "saldoPendiente": 1550000,
+  "activo": true,
+  "cotizacionUuid": "uuid-cotizacion",
+  "cotizacionNumero": 15,
+  "terceroUuid": "uuid-cliente",
+  "clienteNombre": "Roberto Soto Vidal",
+  "clienteRut": "10224881-5",
+  "suscripcionPlanUuid": "uuid-plan",
+  "planNombre": "Plan Tradicional",
+  "sucursalUuid": "uuid-sucursal",
+  "sucursalNombre": "Casa matriz",
+  "agendaUuid": "uuid-agenda",
+  "salaNombre": "Sala San Francisco",
+  "responsableUsuarioUuid": "uuid-usuario",
+  "responsableNombre": "Carla Perez"
+}
+```
+
+Reglas aplicadas por el backend:
+
+```text
+No debe existir mas de un servicio activo para la misma cotizacion.
+Si se envia agendaUuid, debe pertenecer a la misma cotizacion y sucursal.
+saldoPendiente se calcula como montoTotal - montoPagado.
+COMPLETADO y ANULADO no permiten modificaciones operativas criticas.
+PATCH /desactivar marca el servicio como inactivo y lo deja en ANULADO.
+```
+
 ### Inventario
 
 El BFF dirige estas rutas al microservicio configurado mediante
@@ -761,11 +877,14 @@ BFF_ENDPOINTS.md
 src/main/java/cl/gesfun/gesfun_bff/config/SecurityConfig.java
 src/main/java/cl/gesfun/gesfun_bff/controller/BffProxyController.java
 src/main/java/cl/gesfun/gesfun_bff/controller/BffDiagnosticsController.java
+src/main/java/cl/gesfun/gesfun_bff/controller/BffServicioFunerarioController.java
 src/main/java/cl/gesfun/gesfun_bff/controller/Bff*Controller.java
 src/main/java/cl/gesfun/gesfun_bff/service/ProxyService.java
 src/main/java/cl/gesfun/gesfun_bff/service/CrudBffService.java
+src/main/java/cl/gesfun/gesfun_bff/service/ServicioFunerarioBffService.java
 src/main/java/cl/gesfun/gesfun_bff/service/*BffService.java
 src/main/java/cl/gesfun/gesfun_bff/model/FrontendResponse.java
+src/main/java/cl/gesfun/gesfun_bff/model/ServicioFunerario.java
 src/main/java/cl/gesfun/gesfun_bff/model/*.java
 src/main/java/cl/gesfun/gesfun_bff/error/GlobalErrorHandler.java
 src/main/resources/application.properties
@@ -780,7 +899,7 @@ model      -> representa el body que envia el frontend
 ProxyService -> reenvia HTTP al backend local
 ```
 
-Los modelos del BFF son unicos por recurso, por ejemplo `Usuario`, `Empresa`, `Sucursal`, `ProductoServicio`.
+Los modelos del BFF son unicos por recurso, por ejemplo `Usuario`, `Empresa`, `Sucursal`, `ProductoServicio`, `ServicioFunerario`.
 No se separan en `CreateRequest` y `UpdateRequest`; el backend mantiene la validacion final de campos obligatorios.
 
 ## Verificacion
