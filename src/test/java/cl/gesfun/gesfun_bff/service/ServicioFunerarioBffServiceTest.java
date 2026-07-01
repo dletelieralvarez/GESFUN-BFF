@@ -1,6 +1,7 @@
 package cl.gesfun.gesfun_bff.service;
 
 import cl.gesfun.gesfun_bff.model.ServicioFunerario;
+import cl.gesfun.gesfun_bff.model.ServicioFunerarioCreate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -75,8 +76,8 @@ class ServicioFunerarioBffServiceTest {
     }
 
     @Test
-    void crearSerializaFechasIsoYMontos() throws Exception {
-        ServicioFunerario servicio = servicio();
+    void crearSerializaPayloadMinimoDerivadoDesdeCotizacion() throws Exception {
+        ServicioFunerarioCreate servicio = servicioCreate();
         when(proxyService.forwardToBackend(eq("/api/servicios"), eq(HttpMethod.POST), anyString(), eq(jwt)))
                 .thenReturn(ResponseEntity.ok("ok"));
 
@@ -86,11 +87,22 @@ class ServicioFunerarioBffServiceTest {
         verify(proxyService).forwardToBackend(eq("/api/servicios"), eq(HttpMethod.POST), bodyCaptor.capture(), eq(jwt));
         JsonNode body = new ObjectMapper().readTree(bodyCaptor.getValue());
         assertThat(body.get("folio").asText()).isEqualTo("ES-2026-0001");
-        assertThat(body.get("estado").asText()).isEqualTo("PROGRAMADO");
-        assertThat(body.get("fechaIngreso").asText()).isEqualTo("2026-06-30T10:00:00");
-        assertThat(body.get("fechaCeremonia").asText()).isEqualTo("2026-07-01T10:00:00");
-        assertThat(body.get("montoTotal").decimalValue()).isEqualByComparingTo("2050000");
-        assertThat(body.get("montoPagado").decimalValue()).isEqualByComparingTo("500000");
+        assertThat(body.get("estado").asText()).isEqualTo("PENDIENTE");
+        assertThat(body.get("cotizacionUuid").asText()).isEqualTo("cotizacion-1");
+        assertThat(body.get("agendaUuid").isNull()).isTrue();
+        assertThat(body.get("fechaIngreso").asText()).isEqualTo("2026-06-30T00:00:00");
+        assertThat(body.get("fechaVelatorio").isNull()).isTrue();
+        assertThat(body.get("fechaCeremonia").isNull()).isTrue();
+        assertThat(body.get("fechaTermino").isNull()).isTrue();
+        assertThat(body.get("destino").asText()).isEqualTo("Cementerio General");
+        assertThat(body.get("observacion").asText()).isEqualTo("Servicio creado desde cotizacion");
+        assertThat(body.has("terceroUuid")).isFalse();
+        assertThat(body.has("sucursalUuid")).isFalse();
+        assertThat(body.has("fallecidoNombre")).isFalse();
+        assertThat(body.has("fallecidoRut")).isFalse();
+        assertThat(body.has("suscripcionPlanUuid")).isFalse();
+        assertThat(body.has("motivoFallecimientoUuid")).isFalse();
+        assertThat(body.has("montoTotal")).isFalse();
     }
 
     @Test
@@ -135,6 +147,21 @@ class ServicioFunerarioBffServiceTest {
                 "agenda-1",
                 "motivo-1",
                 "usuario-1"
+        );
+    }
+
+    private ServicioFunerarioCreate servicioCreate() {
+        return new ServicioFunerarioCreate(
+                "ES-2026-0001",
+                "PENDIENTE",
+                "cotizacion-1",
+                null,
+                LocalDateTime.of(2026, 6, 30, 0, 0),
+                null,
+                null,
+                null,
+                "Cementerio General",
+                "Servicio creado desde cotizacion"
         );
     }
 }

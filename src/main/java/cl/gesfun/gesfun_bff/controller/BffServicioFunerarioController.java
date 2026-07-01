@@ -2,6 +2,7 @@ package cl.gesfun.gesfun_bff.controller;
 
 import cl.gesfun.gesfun_bff.model.FrontendResponse;
 import cl.gesfun.gesfun_bff.model.ServicioFunerario;
+import cl.gesfun.gesfun_bff.model.ServicioFunerarioCreate;
 import cl.gesfun.gesfun_bff.service.ServicioFunerarioBffService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
@@ -76,7 +77,7 @@ public class BffServicioFunerarioController extends BffResponseSupport {
 
     @PostMapping
     public ResponseEntity<FrontendResponse<Object>> crear(
-            @Valid @RequestBody ServicioFunerario servicio,
+            @Valid @RequestBody ServicioFunerarioCreate servicio,
             @AuthenticationPrincipal Jwt jwt
     ) throws JsonProcessingException {
         return responder(servicioFunerarioBffService.crear(servicio, jwt));

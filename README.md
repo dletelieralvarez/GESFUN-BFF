@@ -655,7 +655,7 @@ COMPLETADO
 ANULADO
 ```
 
-Crear o actualizar un servicio:
+Crear un servicio desde una cotizacion:
 
 ```http
 POST /api/servicios
@@ -666,26 +666,32 @@ Content-Type: application/json
 ```json
 {
   "folio": "ES-2026-0001",
-  "fallecidoNombre": "Nombre Apellido",
-  "fallecidoRut": "12345678-9",
-  "estado": "PROGRAMADO",
-  "fechaIngreso": "2026-06-30T10:00:00",
-  "fechaVelatorio": "2026-06-30T18:00:00",
-  "fechaCeremonia": "2026-07-01T10:00:00",
-  "fechaTermino": "2026-07-01T12:00:00",
-  "destino": "Cementerio General",
-  "montoTotal": 2050000,
-  "montoPagado": 500000,
-  "observacion": "Servicio contratado por la familia",
+  "estado": "PENDIENTE",
   "cotizacionUuid": "uuid-cotizacion",
-  "terceroUuid": "uuid-cliente-responsable",
-  "suscripcionPlanUuid": "uuid-plan",
-  "sucursalUuid": "uuid-sucursal",
-  "agendaUuid": "uuid-agenda",
-  "motivoFallecimientoUuid": "uuid-motivo",
-  "responsableUsuarioUuid": "uuid-usuario"
+  "agendaUuid": null,
+  "fechaIngreso": "2026-06-30T00:00:00",
+  "fechaVelatorio": null,
+  "fechaCeremonia": null,
+  "fechaTermino": null,
+  "destino": "Cementerio General",
+  "observacion": "Servicio creado desde cotizacion"
 }
 ```
+
+En creacion, `cotizacionUuid` es obligatorio. El frontend no debe duplicar
+datos maestros de la cotizacion en el payload. El backend deriva estos campos:
+
+```text
+terceroUuid / clienteNombre / clienteRut
+sucursalUuid / sucursalNombre
+fallecidoNombre / fallecidoRut
+suscripcionPlanUuid / planNombre
+motivoFallecimientoUuid / motivoFallecimientoNombre
+montoTotal
+```
+
+`estado` es opcional; si no se envia, el backend usa `PENDIENTE`.
+`montoPagado` inicia en `0` si no se envia.
 
 Respuesta esperada dentro del `payload`:
 
@@ -693,32 +699,31 @@ Respuesta esperada dentro del `payload`:
 {
   "uuid": "uuid-servicio",
   "folio": "ES-2026-0001",
-  "fallecidoNombre": "Nombre Apellido",
-  "fallecidoRut": "12345678-9",
-  "estado": "PROGRAMADO",
-  "estadoNombre": "Programado",
-  "fechaIngreso": "2026-06-30T10:00:00",
-  "fechaVelatorio": "2026-06-30T18:00:00",
-  "fechaCeremonia": "2026-07-01T10:00:00",
-  "fechaTermino": "2026-07-01T12:00:00",
-  "destino": "Cementerio General",
-  "montoTotal": 2050000,
-  "montoPagado": 500000,
-  "saldoPendiente": 1550000,
-  "activo": true,
   "cotizacionUuid": "uuid-cotizacion",
   "cotizacionNumero": 15,
   "terceroUuid": "uuid-cliente",
   "clienteNombre": "Roberto Soto Vidal",
   "clienteRut": "10224881-5",
+  "fallecidoNombre": "Nombre Apellido",
+  "fallecidoRut": "12345678-9",
   "suscripcionPlanUuid": "uuid-plan",
   "planNombre": "Plan Tradicional",
   "sucursalUuid": "uuid-sucursal",
   "sucursalNombre": "Casa matriz",
-  "agendaUuid": "uuid-agenda",
-  "salaNombre": "Sala San Francisco",
-  "responsableUsuarioUuid": "uuid-usuario",
-  "responsableNombre": "Carla Perez"
+  "agendaUuid": null,
+  "salaNombre": null,
+  "estado": "PENDIENTE",
+  "estadoNombre": "Pendiente",
+  "fechaIngreso": "2026-06-30T00:00:00",
+  "fechaVelatorio": null,
+  "fechaCeremonia": null,
+  "fechaTermino": null,
+  "destino": "Cementerio General",
+  "montoTotal": 2050000,
+  "montoPagado": 0,
+  "saldoPendiente": 2050000,
+  "observacion": "Servicio creado desde cotizacion",
+  "activo": true
 }
 ```
 
@@ -728,6 +733,7 @@ Reglas aplicadas por el backend:
 No debe existir mas de un servicio activo para la misma cotizacion.
 Si se envia agendaUuid, debe pertenecer a la misma cotizacion y sucursal.
 saldoPendiente se calcula como montoTotal - montoPagado.
+El backend deriva datos maestros desde cotizacionUuid al crear el servicio.
 COMPLETADO y ANULADO no permiten modificaciones operativas criticas.
 PATCH /desactivar marca el servicio como inactivo y lo deja en ANULADO.
 ```
@@ -884,6 +890,7 @@ src/main/java/cl/gesfun/gesfun_bff/service/CrudBffService.java
 src/main/java/cl/gesfun/gesfun_bff/service/ServicioFunerarioBffService.java
 src/main/java/cl/gesfun/gesfun_bff/service/*BffService.java
 src/main/java/cl/gesfun/gesfun_bff/model/FrontendResponse.java
+src/main/java/cl/gesfun/gesfun_bff/model/ServicioFunerarioCreate.java
 src/main/java/cl/gesfun/gesfun_bff/model/ServicioFunerario.java
 src/main/java/cl/gesfun/gesfun_bff/model/*.java
 src/main/java/cl/gesfun/gesfun_bff/error/GlobalErrorHandler.java
@@ -900,7 +907,7 @@ ProxyService -> reenvia HTTP al backend local
 ```
 
 Los modelos del BFF son unicos por recurso, por ejemplo `Usuario`, `Empresa`, `Sucursal`, `ProductoServicio`, `ServicioFunerario`.
-No se separan en `CreateRequest` y `UpdateRequest`; el backend mantiene la validacion final de campos obligatorios.
+Cuando el backend expone contratos distintos para crear y actualizar, el BFF usa un modelo especifico como `ServicioFunerarioCreate` para evitar que el frontend duplique datos derivados por el backend.
 
 ## Verificacion
 

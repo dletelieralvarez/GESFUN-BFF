@@ -2,6 +2,7 @@ package cl.gesfun.gesfun_bff.controller;
 
 import cl.gesfun.gesfun_bff.model.FrontendResponse;
 import cl.gesfun.gesfun_bff.model.ServicioFunerario;
+import cl.gesfun.gesfun_bff.model.ServicioFunerarioCreate;
 import cl.gesfun.gesfun_bff.service.ServicioFunerarioBffService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -78,7 +79,7 @@ class BffServicioFunerarioControllerTest {
 
     @Test
     void crearEnviaBodyAlService() throws Exception {
-        ServicioFunerario servicio = servicio();
+        ServicioFunerarioCreate servicio = servicioCreate();
         when(service.crear(servicio, jwt)).thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(Map.of("uuid", "servicio-1")));
 
         ResponseEntity<FrontendResponse<Object>> response = controller.crear(servicio, jwt);
@@ -127,6 +128,21 @@ class BffServicioFunerarioControllerTest {
                 "agenda-1",
                 "motivo-1",
                 "usuario-1"
+        );
+    }
+
+    private ServicioFunerarioCreate servicioCreate() {
+        return new ServicioFunerarioCreate(
+                "ES-2026-0001",
+                "PENDIENTE",
+                "cotizacion-1",
+                null,
+                LocalDateTime.of(2026, 6, 30, 0, 0),
+                null,
+                null,
+                null,
+                "Cementerio General",
+                "Servicio creado desde cotizacion"
         );
     }
 }
