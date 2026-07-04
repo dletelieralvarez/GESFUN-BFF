@@ -4,6 +4,7 @@ import cl.gesfun.gesfun_bff.model.AnulacionMovimientoInventario;
 import cl.gesfun.gesfun_bff.model.EntradaInventario;
 import cl.gesfun.gesfun_bff.model.FrontendResponse;
 import cl.gesfun.gesfun_bff.model.SalidaInventario;
+import cl.gesfun.gesfun_bff.model.SalidaInventarioFacturacion;
 import cl.gesfun.gesfun_bff.service.InventarioBffService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,17 +36,21 @@ class BffInventarioControllerTest {
     void reenviaOperacionesDeMovimiento() throws Exception {
         EntradaInventario entrada = null;
         SalidaInventario salida = null;
+        SalidaInventarioFacturacion salidaFacturacion = null;
         AnulacionMovimientoInventario anulacion = null;
         when(service.registrarEntrada(entrada, jwt)).thenReturn(created());
         when(service.registrarSalida(salida, jwt)).thenReturn(created());
+        when(service.registrarSalidaPorFacturacion(salidaFacturacion, jwt)).thenReturn(created());
         when(service.anularMovimiento("mov-1", anulacion, jwt)).thenReturn(ResponseEntity.ok("anulado"));
 
         assertSuccess(controller.registrarEntrada(entrada, jwt), HttpStatus.CREATED);
         assertSuccess(controller.registrarSalida(salida, jwt), HttpStatus.CREATED);
+        assertSuccess(controller.registrarSalidaPorFacturacion(salidaFacturacion, jwt), HttpStatus.CREATED);
         assertSuccess(controller.anularMovimiento("mov-1", anulacion, jwt), HttpStatus.OK);
 
         verify(service).registrarEntrada(entrada, jwt);
         verify(service).registrarSalida(salida, jwt);
+        verify(service).registrarSalidaPorFacturacion(salidaFacturacion, jwt);
         verify(service).anularMovimiento("mov-1", anulacion, jwt);
     }
 

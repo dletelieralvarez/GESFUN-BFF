@@ -32,6 +32,10 @@ public class TerceroRolBffService {
         return ResponseEntity.status(backendResponse.getStatusCode()).body(payloadFiltrado);
     }
 
+    public ResponseEntity<Object> listarTodos(Jwt jwt) {
+        return proxyService.forwardToBackend(TERCEROS_PATH, HttpMethod.GET, null, jwt);
+    }
+
     public ResponseEntity<Object> listarPorEmpresa(String tipoTercero, String empresaUuid, Jwt jwt) {
         String rol = rolDesdeTipoTercero(tipoTercero);
         return proxyService.forwardToBackend(

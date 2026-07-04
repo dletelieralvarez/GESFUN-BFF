@@ -1,8 +1,10 @@
 package cl.gesfun.gesfun_bff.service;
 
 import cl.gesfun.gesfun_bff.model.DocumentoTributarioEmitir;
+import cl.gesfun.gesfun_bff.model.SalidaInventarioFacturacion;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,11 +30,14 @@ class DocumentoTributarioBffServiceTest {
     @Mock
     private Jwt jwt;
 
+    @Mock
+    private InventarioBffService inventarioBffService;
+
     private DocumentoTributarioBffService service;
 
     @BeforeEach
     void setUp() {
-        service = new DocumentoTributarioBffService(proxyService, new ObjectMapper());
+        service = new DocumentoTributarioBffService(proxyService, new ObjectMapper(), inventarioBffService);
     }
 
     @Test
@@ -63,7 +68,8 @@ class DocumentoTributarioBffServiceTest {
                 "Emision por pago de servicio funerario"
         );
         when(proxyService.forwardToBackend(eq("/api/documentos-tributarios/emitir"), eq(HttpMethod.POST), anyString(), eq(jwt)))
-                .thenReturn(ResponseEntity.ok("ok"));
+                .thenReturn(ResponseEntity.ok(documentoResponse("BOLETA")));
+        when(jwt.getClaimAsString("usuarioUuid")).thenReturn("usuario-1");
 
         service.emitir(request, jwt);
 
@@ -72,6 +78,14 @@ class DocumentoTributarioBffServiceTest {
         JsonNode body = new ObjectMapper().readTree(bodyCaptor.getValue());
         assertThat(body.get("pagoUuid").asText()).isEqualTo("pago-1");
         assertThat(body.get("tipoDocumentoCodigo").asText()).isEqualTo("BOLETA");
+
+        ArgumentCaptor<SalidaInventarioFacturacion> salidaCaptor =
+                ArgumentCaptor.forClass(SalidaInventarioFacturacion.class);
+        verify(inventarioBffService).registrarSalidaPorFacturacion(salidaCaptor.capture(), eq(jwt));
+        assertThat(salidaCaptor.getValue().documentoTributarioUuid()).isEqualTo("doc-1");
+        assertThat(salidaCaptor.getValue().cotizacionUuid()).isEqualTo("cotizacion-1");
+        assertThat(salidaCaptor.getValue().usuarioUuid()).isEqualTo("usuario-1");
+        assertThat(salidaCaptor.getValue().numeroFactura()).isEqualTo("12345");
     }
 
     @Test
@@ -82,7 +96,8 @@ class DocumentoTributarioBffServiceTest {
                 "Emision por pago de servicio funerario"
         );
         when(proxyService.forwardToBackend(eq("/api/documentos-tributarios/emitir"), eq(HttpMethod.POST), anyString(), eq(jwt)))
-                .thenReturn(ResponseEntity.ok("ok"));
+                .thenReturn(ResponseEntity.ok(documentoResponse("FACTURA")));
+        when(jwt.getClaimAsString("usuarioUuid")).thenReturn("usuario-1");
 
         service.emitir(request, jwt);
 
@@ -110,5 +125,15 @@ class DocumentoTributarioBffServiceTest {
         service.anular("doc-1", jwt);
 
         verify(proxyService).forwardToBackend("/api/documentos-tributarios/doc-1/anular", HttpMethod.PATCH, null, jwt);
+    }
+
+    private Map<String, Object> documentoResponse(String tipoDocumentoCodigo) {
+        return Map.of(
+                "uuid", "doc-1",
+                "pagoUuid", "pago-1",
+                "cotizacionUuid", "cotizacion-1",
+                "tipoDocumentoCodigo", tipoDocumentoCodigo,
+                "folio", "12345"
+        );
     }
 }

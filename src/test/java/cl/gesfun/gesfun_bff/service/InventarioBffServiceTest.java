@@ -4,6 +4,7 @@ import cl.gesfun.gesfun_bff.model.AnulacionMovimientoInventario;
 import cl.gesfun.gesfun_bff.model.EntradaInventario;
 import cl.gesfun.gesfun_bff.model.MovimientoInventarioDetalle;
 import cl.gesfun.gesfun_bff.model.SalidaInventario;
+import cl.gesfun.gesfun_bff.model.SalidaInventarioFacturacion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -119,9 +120,21 @@ class InventarioBffServiceTest {
                 new AnulacionMovimientoInventario("Error de digitacion", "usuario");
 
         mockExchange("http://localhost:8100/api/inventario/salidas", HttpMethod.POST);
+        mockExchange("http://localhost:8100/api/inventario/salidas/facturacion", HttpMethod.POST);
         mockExchange("http://localhost:8100/api/inventario/movimientos/mov-1/anular", HttpMethod.PATCH);
 
         service.registrarSalida(salida, null);
+        service.registrarSalidaPorFacturacion(
+                new SalidaInventarioFacturacion(
+                        "doc-1",
+                        "cotizacion-1",
+                        "usuario-1",
+                        LocalDate.of(2026, 7, 3),
+                        "F12345",
+                        "Salida generada desde facturacion"
+                ),
+                null
+        );
         service.anularMovimiento("mov-1", anulacion, null);
     }
 

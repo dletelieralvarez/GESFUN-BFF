@@ -229,6 +229,7 @@ Estas rutas se reenvian al microservicio configurado en `inventario.base-url`:
 ```text
 POST  /api/inventario/entradas
 POST  /api/inventario/salidas
+POST  /api/inventario/salidas/facturacion
 PATCH /api/inventario/movimientos/{movimientoUuid}/anular
 GET   /api/inventario/stock?sucursalUuid={uuid}
 GET   /api/inventario/stock/productos/{productoUuid}?sucursalUuid={uuid}

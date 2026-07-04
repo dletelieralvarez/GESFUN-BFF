@@ -205,6 +205,8 @@ Clientes, proveedores y empleados son endpoints BFF sobre `/api/terceros`.
 El BFF agrega o fuerza el `rol` correcto en `POST` y `PUT`.
 
 ```text
+GET    /api/terceros
+
 GET    /api/clientes
 GET    /api/clientes/{uuid}
 GET    /api/clientes/empresa/{empresaUuid}
@@ -560,6 +562,12 @@ activo para el mismo pago. La emision simula el proveedor
 `DTEEMITE_SIMULADO`; el total se toma desde el monto del pago y el receptor se
 toma desde el pagador de la cotizacion.
 
+Cuando la emision responde correctamente, el BFF registra una salida en
+Inventario mediante `POST /api/inventario/salidas/facturacion`. Para esa salida
+usa el `uuid` y `cotizacionUuid` del documento tributario, obtiene
+`usuarioUuid` desde el JWT (`usuarioUuid`, `user_uuid`, `oid` o `sub`) y envia
+como observacion `Salida generada desde facturacion`.
+
 Para `BOLETA`, el backend responde `tipoDocumentoNombre` como `Boleta`. Para
 `FACTURA`, responde `Factura`. La respuesta no incluye `tipoDocumentoUuid`.
 
@@ -746,6 +754,7 @@ El BFF dirige estas rutas al microservicio configurado mediante
 ```text
 POST  /api/inventario/entradas
 POST  /api/inventario/salidas
+POST  /api/inventario/salidas/facturacion
 PATCH /api/inventario/movimientos/{movimientoUuid}/anular
 GET   /api/inventario/stock?sucursalUuid={uuid}
 GET   /api/inventario/stock/productos/{productoUuid}?sucursalUuid={uuid}
@@ -802,6 +811,29 @@ El BFF reenvía ese body como una sola llamada a
 `POST http://localhost:8100/api/inventario/entradas`. Inventario valida y guarda
 la cabecera y todos los detalles dentro de una única transacción. Si falla una
 línea, no se registra ninguna parte de la entrada.
+
+Salida generada por facturacion:
+
+```http
+POST /api/inventario/salidas/facturacion
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+```json
+{
+  "documentoTributarioUuid": "uuid-documento",
+  "cotizacionUuid": "uuid-cotizacion",
+  "usuarioUuid": "uuid-usuario",
+  "fechaDocumento": "2026-07-03",
+  "numeroFactura": "12345",
+  "observacion": "Salida generada desde facturacion"
+}
+```
+
+Esta ruta tambien puede ser usada directamente por el frontend si necesita
+regularizar una salida asociada a un documento tributario. En el flujo normal,
+la invoca automaticamente el BFF despues de `POST /api/documentos-tributarios/emitir`.
 
 ## Diagnostico de token
 

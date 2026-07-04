@@ -3,6 +3,7 @@ package cl.gesfun.gesfun_bff.service;
 import cl.gesfun.gesfun_bff.model.AnulacionMovimientoInventario;
 import cl.gesfun.gesfun_bff.model.EntradaInventario;
 import cl.gesfun.gesfun_bff.model.SalidaInventario;
+import cl.gesfun.gesfun_bff.model.SalidaInventarioFacturacion;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
@@ -43,6 +44,13 @@ public class InventarioBffService {
     public ResponseEntity<Object> registrarSalida(SalidaInventario request, Jwt jwt)
             throws JsonProcessingException {
         return forward("/api/inventario/salidas", HttpMethod.POST, request, jwt);
+    }
+
+    public ResponseEntity<Object> registrarSalidaPorFacturacion(
+            SalidaInventarioFacturacion request,
+            Jwt jwt
+    ) throws JsonProcessingException {
+        return forward("/api/inventario/salidas/facturacion", HttpMethod.POST, request, jwt);
     }
 
     public ResponseEntity<Object> anularMovimiento(

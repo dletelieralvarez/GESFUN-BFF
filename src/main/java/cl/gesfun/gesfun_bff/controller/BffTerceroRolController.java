@@ -37,6 +37,13 @@ public class BffTerceroRolController {
         return responder(terceroRolBffService.listar(tipoTercero, jwt));
     }
 
+    @GetMapping("/terceros")
+    public ResponseEntity<FrontendResponse<Object>> listarTerceros(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        return responder(terceroRolBffService.listarTodos(jwt));
+    }
+
     @GetMapping("/{tipoTercero:clientes|proveedores|empleados}/empresa/{empresaUuid}")
     public ResponseEntity<FrontendResponse<Object>> listarPorEmpresa(
             @PathVariable String tipoTercero,

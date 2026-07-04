@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 
 @ControllerAdvice
 public class GlobalErrorHandler {
@@ -31,6 +32,12 @@ public class GlobalErrorHandler {
         );
         return ResponseEntity.status(ex.getRawStatusCode())
                 .body(FrontendResponse.failure(message + " " + ex.getResponseBodyAsString()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<FrontendResponse<Object>> handleResponseStatusException(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(FrontendResponse.failure(ex.getReason()));
     }
 
     @ExceptionHandler(Exception.class)

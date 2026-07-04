@@ -4,6 +4,7 @@ import cl.gesfun.gesfun_bff.model.AnulacionMovimientoInventario;
 import cl.gesfun.gesfun_bff.model.EntradaInventario;
 import cl.gesfun.gesfun_bff.model.FrontendResponse;
 import cl.gesfun.gesfun_bff.model.SalidaInventario;
+import cl.gesfun.gesfun_bff.model.SalidaInventarioFacturacion;
 import cl.gesfun.gesfun_bff.service.InventarioBffService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
@@ -45,6 +46,14 @@ public class BffInventarioController extends BffResponseSupport {
             @AuthenticationPrincipal Jwt jwt
     ) throws JsonProcessingException {
         return responder(inventarioBffService.registrarSalida(request, jwt));
+    }
+
+    @PostMapping("/salidas/facturacion")
+    public ResponseEntity<FrontendResponse<Object>> registrarSalidaPorFacturacion(
+            @Valid @RequestBody SalidaInventarioFacturacion request,
+            @AuthenticationPrincipal Jwt jwt
+    ) throws JsonProcessingException {
+        return responder(inventarioBffService.registrarSalidaPorFacturacion(request, jwt));
     }
 
     @PatchMapping("/movimientos/{movimientoUuid}/anular")
