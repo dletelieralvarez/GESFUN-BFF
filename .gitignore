@@ -1,5 +1,7 @@
 HELP.md
 target/
+bff-run.log
+bff-run.err.log
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

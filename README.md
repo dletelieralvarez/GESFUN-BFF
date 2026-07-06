@@ -403,6 +403,10 @@ Las llamadas de cotizacion mantienen el mismo flujo protegido del resto del BFF:
 Angular/Postman -> BFF 8081 -> Backend 8080
 ```
 
+En `POST /api/cotizaciones`, el BFF conserva `uuid`, `terceroUuid` y `rol` en
+`pagador`/`fallecido`. Antes de reenviar al backend fuerza los roles
+funcionales del flujo: `pagador.rol=CLIENTE` y `fallecido.rol=FALLECIDO`.
+
 Ejemplo para crear una cotizacion:
 
 ```http
@@ -425,6 +429,7 @@ Content-Type: application/json
   "lugarFallecimiento": "Santiago",
   "pagador": {
     "tipoPersona": "N",
+    "rol": "CLIENTE",
     "rut": 12345678,
     "dv": "5",
     "nombres": "Ana",
@@ -436,6 +441,7 @@ Content-Type: application/json
   },
   "fallecido": {
     "tipoPersona": "N",
+    "rol": "FALLECIDO",
     "rut": 8765432,
     "dv": "1",
     "nombres": "Juan",
@@ -564,9 +570,11 @@ toma desde el pagador de la cotizacion.
 
 Cuando la emision responde correctamente, el BFF registra una salida en
 Inventario mediante `POST /api/inventario/salidas/facturacion`. Para esa salida
-usa el `uuid` y `cotizacionUuid` del documento tributario, obtiene
-`usuarioUuid` desde el JWT (`usuarioUuid`, `user_uuid`, `oid` o `sub`) y envia
-como observacion `Salida generada desde facturacion`.
+usa el `uuid` y `cotizacionUuid` del documento tributario. El BFF busca primero
+el usuario activo en `/api/usuarios` usando el email del JWT y envia ese UUID
+interno como `usuarioUuid`. Si el JWT no trae email, usa `usuarioUuid` o
+`user_uuid` como respaldo. No usa `oid` ni `sub` como UUID de usuario interno.
+Envia como observacion `Salida generada por facturacion`.
 
 Para `BOLETA`, el backend responde `tipoDocumentoNombre` como `Boleta`. Para
 `FACTURA`, responde `Factura`. La respuesta no incluye `tipoDocumentoUuid`.
@@ -827,7 +835,7 @@ Content-Type: application/json
   "usuarioUuid": "uuid-usuario",
   "fechaDocumento": "2026-07-03",
   "numeroFactura": "12345",
-  "observacion": "Salida generada desde facturacion"
+  "observacion": "Salida generada por facturacion"
 }
 ```
 
