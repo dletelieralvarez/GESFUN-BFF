@@ -187,6 +187,13 @@ GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
 
+POST   /api/documentos-servicio
+GET    /api/documentos-servicio
+GET    /api/documentos-servicio/{uuid}
+GET    /api/documentos-servicio/cotizacion/{cotizacionUuid}
+PUT    /api/documentos-servicio/{uuid}
+DELETE /api/documentos-servicio/{uuid}
+
 GET    /api/pagos
 GET    /api/pagos/{uuid}
 GET    /api/pagos/cotizacion/{cotizacionUuid}

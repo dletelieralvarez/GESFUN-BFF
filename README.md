@@ -354,6 +354,13 @@ GET    /api/cotizaciones/{uuid}
 GET    /api/cotizaciones/sucursal/{sucursalUuid}
 PATCH  /api/cotizaciones/{uuid}/estado
 
+POST   /api/documentos-servicio
+GET    /api/documentos-servicio
+GET    /api/documentos-servicio/{uuid}
+GET    /api/documentos-servicio/cotizacion/{cotizacionUuid}
+PUT    /api/documentos-servicio/{uuid}
+DELETE /api/documentos-servicio/{uuid}
+
 GET    /api/pagos
 GET    /api/pagos/{uuid}
 GET    /api/pagos/cotizacion/{cotizacionUuid}
@@ -406,6 +413,10 @@ Angular/Postman -> BFF 8081 -> Backend 8080
 En `POST /api/cotizaciones`, el BFF conserva `uuid`, `terceroUuid` y `rol` en
 `pagador`/`fallecido`. Antes de reenviar al backend fuerza los roles
 funcionales del flujo: `pagador.rol=CLIENTE` y `fallecido.rol=FALLECIDO`.
+El BFF debe seguir enviando `pagador` y `fallecido` completos. Si ya existe un
+tercero con el mismo rut y dv dentro de la empresa, el backend reutiliza ese
+tercero y actualiza sus datos con lo recibido en la cotizacion. `comunaUuid`
+sigue siendo obligatorio para ambos.
 
 Ejemplo para crear una cotizacion:
 
@@ -475,6 +486,53 @@ Content-Type: application/json
   "estadoUuid": "uuid-estado-cotizacion"
 }
 ```
+
+### Documentos de servicio
+
+El modulo `DocumentoServicio` permite registrar y consultar documentos asociados
+a una cotizacion. El BFF reenvia el payload al backend en `/api/documentos-servicio`.
+
+```text
+POST   /api/documentos-servicio
+GET    /api/documentos-servicio
+GET    /api/documentos-servicio/{uuid}
+GET    /api/documentos-servicio/cotizacion/{cotizacionUuid}
+PUT    /api/documentos-servicio/{uuid}
+DELETE /api/documentos-servicio/{uuid}
+```
+
+Crear documento:
+
+```json
+{
+  "cotizacionUuid": "uuid-cotizacion",
+  "usuarioUuid": "uuid-usuario",
+  "tipoDocumentoUuid": "uuid-tipo-documento",
+  "estadoDocumento": "PENDIENTE",
+  "observacion": "Documento solicitado al cliente"
+}
+```
+
+`cotizacionUuid`, `usuarioUuid` y `tipoDocumentoUuid` son obligatorios y deben
+existir en backend. `estadoDocumento` y `observacion` son opcionales. Si no se
+envia `estadoDocumento`, el backend guarda el documento como `PENDIENTE`. Los
+estados validos son `PENDIENTE` y `REALIZADO`; otro valor devuelve error de
+negocio desde backend.
+
+Actualizar documento:
+
+```json
+{
+  "usuarioUuid": "uuid-usuario",
+  "tipoDocumentoUuid": "uuid-tipo-documento",
+  "estadoDocumento": "REALIZADO",
+  "observacion": "Documento recibido correctamente"
+}
+```
+
+En actualizacion todos los campos son opcionales; los campos omitidos conservan
+su valor actual. `DELETE /api/documentos-servicio/{uuid}` elimina fisicamente el
+registro y responde `204 No Content`.
 
 ### Pagos y facturacion
 
