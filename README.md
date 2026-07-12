@@ -59,14 +59,37 @@ src/main/resources/application.properties
 Propiedades relevantes:
 
 ```properties
+server.address=${SERVER_ADDRESS:0.0.0.0}
 server.port=8081
-backend.base-url=http://localhost:8080
+backend.base-url=${BACKEND_URL:http://localhost:8080}
 inventario.base-url=${INVENTARIO_URL:http://localhost:8100}
-cors.allowed-origins=http://localhost:4200
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 ```
 
-`INVENTARIO_URL` permite cambiar el destino sin modificar el repositorio. Si la
-variable no está definida, el BFF usa `http://localhost:8100`.
+`SERVER_ADDRESS` queda por defecto en `0.0.0.0` para que el BFF escuche desde
+la red de la EC2 en el puerto `8081`. `BACKEND_URL`, `INVENTARIO_URL` y
+`CORS_ALLOWED_ORIGINS` permiten cambiar destinos sin modificar el repositorio.
+Si el backend corre en la misma EC2 que el BFF, mantener
+`BACKEND_URL=http://localhost:8080`.
+
+Para pruebas desde EC2 con Angular en `http://<HOST_EC2>:4200`, configurar:
+
+```properties
+CORS_ALLOWED_ORIGINS=http://localhost:4200,http://<HOST_EC2>:4200
+BACKEND_URL=http://localhost:8080
+```
+
+Si el backend corre en otra maquina, contenedor o servicio:
+
+```properties
+BACKEND_URL=http://<HOST_BACKEND>:8080
+```
+
+El frontend Angular resuelve dinamicamente el host del BFF. Si se abre en
+`http://<HOST_EC2>:4200`, llamara a `http://<HOST_EC2>:8081`; no usara
+`http://localhost:8081` desde EC2. El Security Group de EC2 debe permitir
+entrada a `4200` y `8081`. Si el backend no debe exponerse publicamente, basta
+con que el BFF lo consuma internamente por `localhost:8080`.
 
 Seguridad Azure:
 
@@ -84,6 +107,12 @@ security.jwt.allowed-client-ids=<POSTMAN_CLIENT_ID>,<FRONTEND_CLIENT_ID>
 ```
 
 Si Azure cambia el Client ID de `gesfun-client`, se debe agregar o reemplazar en `security.jwt.allowed-client-ids`.
+
+Para despliegue EC2 del frontend, agregar como Redirect URI en Azure Entra ID:
+
+```text
+http://<HOST_EC2>:4200
+```
 
 ## Azure
 
