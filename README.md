@@ -26,7 +26,7 @@ No es necesario instalar Maven globalmente si se usa el wrapper del proyecto:
 Frontend Angular: http://localhost:4200
 BFF Gesfun:       http://localhost:8081
 Backend Gesfun:   http://localhost:8080
-Inventario:       http://localhost:8100
+Inventario:       http://ec2-3-232-165-188.compute-1.amazonaws.com:8100
 ```
 
 Flujo esperado:
@@ -62,7 +62,7 @@ Propiedades relevantes:
 server.address=${SERVER_ADDRESS:0.0.0.0}
 server.port=8081
 backend.base-url=${BACKEND_URL:http://localhost:8080}
-inventario.base-url=${INVENTARIO_URL:http://localhost:8100}
+inventario.base-url=${INVENTARIO_URL:http://ec2-3-232-165-188.compute-1.amazonaws.com:8100}
 cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 ```
 
@@ -71,6 +71,13 @@ la red de la EC2 en el puerto `8081`. `BACKEND_URL`, `INVENTARIO_URL` y
 `CORS_ALLOWED_ORIGINS` permiten cambiar destinos sin modificar el repositorio.
 Si el backend corre en la misma EC2 que el BFF, mantener
 `BACKEND_URL=http://localhost:8080`.
+
+Inventario por defecto apunta a:
+
+```text
+http://ec2-3-232-165-188.compute-1.amazonaws.com:8100
+IP: 3.232.165.188
+```
 
 Para pruebas desde EC2 con Angular en `http://<HOST_EC2>:4200`, configurar:
 
@@ -171,7 +178,7 @@ cd <RUTA_DEL_BFF>
 Cambiar el destino de Inventario sin editar archivos:
 
 ```powershell
-$env:INVENTARIO_URL="http://localhost:8100"
+$env:INVENTARIO_URL="http://ec2-3-232-165-188.compute-1.amazonaws.com:8100"
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -844,7 +851,8 @@ PATCH /desactivar marca el servicio como inactivo y lo deja en ANULADO.
 ### Inventario
 
 El BFF dirige estas rutas al microservicio configurado mediante
-`inventario.base-url` (por defecto `http://localhost:8100`):
+`inventario.base-url` (por defecto
+`http://ec2-3-232-165-188.compute-1.amazonaws.com:8100`, IP `3.232.165.188`):
 
 ```text
 POST  /api/inventario/entradas
@@ -903,7 +911,7 @@ Content-Type: application/json
 ```
 
 El BFF reenvía ese body como una sola llamada a
-`POST http://localhost:8100/api/inventario/entradas`. Inventario valida y guarda
+`POST http://ec2-3-232-165-188.compute-1.amazonaws.com:8100/api/inventario/entradas`. Inventario valida y guarda
 la cabecera y todos los detalles dentro de una única transacción. Si falla una
 línea, no se registra ninguna parte de la entrada.
 
@@ -991,10 +999,11 @@ El token fue valido, pero no trae el scope requerido.
 
 El BFF esta levantado, pero el backend no esta respondiendo en `8080`.
 
-`Connection refused http://localhost:8100/...`
+`Connection refused http://ec2-3-232-165-188.compute-1.amazonaws.com:8100/...`
 
 El BFF esta levantado, pero el microservicio de Inventario no esta respondiendo
-en `8100`, o `INVENTARIO_URL` apunta a una dirección incorrecta.
+en `8100`, o `INVENTARIO_URL` apunta a una dirección incorrecta. Para desarrollo
+local se puede sobrescribir con `http://localhost:8100`.
 
 ## Endpoints
 
@@ -1055,7 +1064,7 @@ Construir imagen Docker:
 
 ```powershell
 docker build -t gesfun-bff .
-docker run --rm -p 8081:8081 -e INVENTARIO_URL=http://host.docker.internal:8100 gesfun-bff
+docker run --rm -p 8081:8081 -e INVENTARIO_URL=http://ec2-3-232-165-188.compute-1.amazonaws.com:8100 gesfun-bff
 ```
 
 El reporte HTML de JaCoCo queda en:
