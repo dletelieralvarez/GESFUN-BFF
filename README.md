@@ -63,7 +63,7 @@ server.address=${SERVER_ADDRESS:0.0.0.0}
 server.port=8081
 backend.base-url=${BACKEND_URL:http://localhost:8080}
 inventario.base-url=${INVENTARIO_URL:http://ec2-3-232-165-188.compute-1.amazonaws.com:8100}
-cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://gesfun.duckdns.org}
 ```
 
 `SERVER_ADDRESS` queda por defecto en `0.0.0.0` para que el BFF escuche desde
@@ -79,11 +79,11 @@ http://ec2-3-232-165-188.compute-1.amazonaws.com:8100
 IP: 3.232.165.188
 ```
 
-Para pruebas desde EC2 con Angular en `http://<HOST_EC2>:4200`, configurar:
+Para producción con Angular publicado en `https://gesfun.duckdns.org`, configurar:
 
 ```properties
-CORS_ALLOWED_ORIGINS=http://localhost:4200,http://<HOST_EC2>:4200
-BACKEND_URL=http://localhost:8080
+CORS_ALLOWED_ORIGINS=http://localhost:4200,https://gesfun.duckdns.org
+BACKEND_URL=http://52.5.22.46:8080
 ```
 
 Si el backend corre en otra maquina, contenedor o servicio:

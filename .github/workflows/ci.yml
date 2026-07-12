@@ -105,12 +105,12 @@ jobs:
             docker stop gesfun-bff || true
             docker rm gesfun-bff || true
 
-            # Levanta el BFF en el puerto 8080
+            # Levanta el BFF en el puerto 8080 del host, apuntando al Tomcat interno 8081
             docker run -d --name gesfun-bff \
               --restart always \
               -p 8080:8081 \
               -e BACKEND_URL="http://52.5.22.46:8080" \
-              -e CORS_ALLOWED_ORIGINS="http://44.205.171.7,http://44.205.171.7:80" \
+              -e CORS_ALLOWED_ORIGINS="http://localhost:4200,https://gesfun.duckdns.org" \
               "${{ secrets.DOCKERHUB_USERNAME }}/gesfun-bff:latest"
 
             # Muestra contenedores activos para validar despliegue

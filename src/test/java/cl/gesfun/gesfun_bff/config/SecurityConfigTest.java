@@ -22,7 +22,7 @@ class SecurityConfigTest {
     @BeforeEach
     void setUp() {
         config = new SecurityConfig();
-        ReflectionTestUtils.setField(config, "allowedOrigins", "http://localhost:4200, http://localhost:4300");
+        ReflectionTestUtils.setField(config, "allowedOrigins", "http://localhost:4200, https://gesfun.duckdns.org");
         ReflectionTestUtils.setField(config, "audience", "api-audience");
         ReflectionTestUtils.setField(config, "allowedClientIds", "client-1,client-2");
     }
@@ -34,9 +34,9 @@ class SecurityConfigTest {
         CorsConfiguration cors = source.getCorsConfiguration(new org.springframework.mock.web.MockHttpServletRequest("GET", "/api/test"));
 
         assertThat(cors).isNotNull();
-        assertThat(cors.getAllowedOrigins()).containsExactly("http://localhost:4200", "http://localhost:4300");
+        assertThat(cors.getAllowedOrigins()).containsExactly("http://localhost:4200", "https://gesfun.duckdns.org");
         assertThat(cors.getAllowedMethods()).containsExactly("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-        assertThat(cors.getAllowedHeaders()).containsExactly("Authorization", "Content-Type", "Accept");
+        assertThat(cors.getAllowedHeaders()).containsExactly("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With");
         assertThat(cors.getAllowCredentials()).isTrue();
     }
 

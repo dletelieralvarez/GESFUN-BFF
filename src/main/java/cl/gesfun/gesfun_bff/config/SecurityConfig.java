@@ -1,14 +1,25 @@
 package cl.gesfun.gesfun_bff.config;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,6 +39,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
@@ -36,16 +48,25 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+    private static final List<String> CORS_ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+    private static final List<String> CORS_ALLOWED_HEADERS = List.of(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With"
+    );
 
     /*
         Configura Spring Security para el BFF.
         Activa validación JWT como recurso protegido (oauth2ResourceServer).
-        Habilita CORS para que Angular pueda llamar desde http://localhost:4200 u orígenes configurados.
+        Habilita CORS para que Angular pueda llamar desde http://localhost:4200,
+        https://gesfun.duckdns.org u orígenes configurados.
         Define las rutas protegidas: /api/** requiere autenticación.
         Convierte claims scp de Azure AD en authorities con prefijo SCOPE_.
     */
-   
-    @Value("${cors.allowed-origins:http://localhost:4200}")
+
+    @Value("${cors.allowed-origins:http://localhost:4200,https://gesfun.duckdns.org}")
     private String allowedOrigins;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
@@ -166,19 +187,78 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .collect(Collectors.toList());
+        List<String> origins = configuredAllowedOrigins();
 
         corsConfiguration.setAllowedOrigins(origins);
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        corsConfiguration.setAllowedMethods(CORS_ALLOWED_METHODS);
+        corsConfiguration.setAllowedHeaders(CORS_ALLOWED_HEADERS);
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
+    }
+
+    @Bean
+    public FilterRegistrationBean<OncePerRequestFilter> corsDiagnosticFilter() {
+        FilterRegistrationBean<OncePerRequestFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(
+                    HttpServletRequest request,
+                    HttpServletResponse response,
+                    FilterChain filterChain
+            ) throws ServletException, IOException {
+                String origin = request.getHeader("Origin");
+                if (origin != null && !origin.isBlank()) {
+                    String requestedMethod = request.getHeader("Access-Control-Request-Method");
+                    log.info(
+                            "BFF CORS request recibido. origin={} method={} uri={} accessControlRequestMethod={} headerNames={} allowedOrigins={} evaluation={}",
+                            origin,
+                            request.getMethod(),
+                            request.getRequestURI(),
+                            requestedMethod,
+                            headerNames(request),
+                            configuredAllowedOrigins(),
+                            corsEvaluation(origin, requestedMethod)
+                    );
+                }
+
+                filterChain.doFilter(request, response);
+            }
+        });
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    private List<String> configuredAllowedOrigins() {
+        return Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private String corsEvaluation(String origin, String requestedMethod) {
+        if (!configuredAllowedOrigins().contains(origin)) {
+            return "origin no permitido";
+        }
+
+        if (requestedMethod != null
+                && !requestedMethod.isBlank()
+                && !CORS_ALLOWED_METHODS.contains(requestedMethod.toUpperCase(Locale.ROOT))) {
+            return "metodo preflight no permitido";
+        }
+
+        return "permitido por configuracion CORS";
+    }
+
+    private List<String> headerNames(HttpServletRequest request) {
+        Enumeration<String> headerNames = request.getHeaderNames();
+        if (headerNames == null) {
+            return List.of();
+        }
+
+        return Collections.list(headerNames);
     }
 
     @Bean
